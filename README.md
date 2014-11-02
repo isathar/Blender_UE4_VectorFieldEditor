@@ -52,7 +52,7 @@ Usage:
 - Set the resolution (X,Y,Z)
 - Set the scale (Size multiplier for the volume's bounds)
 - Click *Generate*
-- *NOTE:* the number of vectors in the vertex field is shown below this button
+- *NOTE:* the number of vectors in the vector field is shown below this button
 
 
 *Editing:*

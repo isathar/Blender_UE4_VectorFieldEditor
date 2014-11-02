@@ -1,14 +1,15 @@
 Blender_UE4_VectorFieldEditor
 =============================
 
-Adds support for creating vector fields and exporting them in the FGA format.
+Adds support for creating vector fields and exporting/importing the FGA format.
+
+
+-------------------------------------------------------------------------------------------------------
 
 Installation:
 - Extract to your Blender\#.##\scripts\addons folder
 - enable in the addon manager (named "Vector Field Tools")
 
-
-rough instructions (WIP):
 
 
 Notes:
@@ -23,16 +24,22 @@ Notes:
 	- baking particle transforms for a very dense (64base +) vector field can take a while.
 
 
-instructions:
+-------------------------------------------------------------------------------------------------------
 
-	Creating:
+
+Usage:
+-------------
+
+
+Creating:
 
 - set x,y,z resolution
 - set scale
 - click generate
 (number of vectors in field is shown below this button)
 
-	Editing:
+
+Editing:
 
 - select the VF_Volume_X object (floating points, not the bounds) to change its particle settings
 - add any forces you want influencing the particles to the scene
@@ -41,7 +48,8 @@ instructions:
 - select the frame you want the exported velocities to be based on
 - click "Calculate"
 
-	Curve Path Tool:
+
+Curve Path Tool:
 
 (creates small wind forces along a line to make particles flow)
 
@@ -51,13 +59,15 @@ instructions:
 - click create
 - this acts like any other forcefields, so the same instructions to save apply
 
-	Exporting:
+
+Exporting:
 
 - the export button is invisible by default and becomes visible once there is something to export
 - click Calculate to create the data that is exported
 - click export
 
-	Importing:
+
+Importing:
 
 - click the import button in the top of the panel, select the file
 - the script will now generate a new vector field of the dimensions in the file and populate its velocities list

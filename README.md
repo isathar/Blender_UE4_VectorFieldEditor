@@ -11,7 +11,7 @@ Installation:
 rough instructions (WIP):
 
 
-notes: 
+Notes:
 - Blender will briefly freeze (or hitch) while generating vector fields
 - vector fields generate pretty quickly, (on an older Core i5 CPU) less than a second for 32x32x32 and below, around 20 seconds for a 128x128x128 density field
 (compared to my first few attempts, which ate my RAM and froze Blender for 20 minutes on a 16-base vector field)
@@ -25,15 +25,14 @@ notes:
 
 instructions:
 
-	create new:
+	Creating:
 
 - set x,y,z resolution
 - set scale
 - click generate
 (number of vectors in field is shown below this button)
 
-
-	editing:
+	Editing:
 
 - select the VF_Volume_X object (floating points, not the bounds) to change its particle settings
 - add any forces you want influencing the particles to the scene
@@ -42,9 +41,9 @@ instructions:
 - select the frame you want the exported velocities to be based on
 - click "Calculate"
 
+	Curve Path Tool:
 
-	curve path tool: 
-	(creates small wind forces along a line to make particles flow)
+(creates small wind forces along a line to make particles flow)
 
 - create a curve object, shape it in the path you want particles to follow
 - any kind of curve (point curve, bezier and nurbs) should be supported, including circles + knots
@@ -52,15 +51,13 @@ instructions:
 - click create
 - this acts like any other forcefields, so the same instructions to save apply
 
-
-	export:
+	Exporting:
 
 - the export button is invisible by default and becomes visible once there is something to export
 - click Calculate to create the data that is exported
 - click export
 
-
-	import:
+	Importing:
 
 - click the import button in the top of the panel, select the file
 - the script will now generate a new vector field of the dimensions in the file and populate its velocities list

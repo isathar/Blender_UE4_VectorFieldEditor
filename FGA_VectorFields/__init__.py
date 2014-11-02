@@ -41,16 +41,16 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		box = layout.box()
 		row = box.row()
 		if context.active_object != None:
-			if ("VF_Volume" in str(context.active_object.name)) and ('vf_startlocations' in bpy.context.active_object) and ('custom_vectorfield' in bpy.context.active_object):
+			if ("VF_Volume" in str(context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
 				row.operator('object.export_vectorfieldfile', text='Export')
-			elif ("VF_Volume" in str(context.active_object.name)) and (not (('vf_startlocations' in bpy.context.active_object) and ('custom_vectorfield' in bpy.context.active_object))):
+			elif ("VF_Volume" in str(context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
 				label = box.label("no velocities", 'NONE')
 			else:
 				label = box.label("not a volume", 'NONE')
 		else:
 			label = box.label("no object", 'NONE')
-		#row = box.row()
-		#row.operator('object.import_vectorfieldfile', text='Import')
+		row = box.row()
+		row.operator('object.import_vectorfieldfile', text='Import')
 		row = layout.row()
 		
 		# Create

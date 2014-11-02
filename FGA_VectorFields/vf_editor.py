@@ -103,7 +103,6 @@ class calc_pathalongspline(bpy.types.Operator):
 		
 #####################################################
 
-
 class create_vectorfield(bpy.types.Operator):
 	bl_idname = 'object.create_vectorfield'
 	bl_label = 'Create VectorField'

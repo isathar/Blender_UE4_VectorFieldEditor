@@ -95,9 +95,9 @@ Usage:
 Changelog:
 
 v0.8 
-	added import functionality
-	massive speed improvement
+	- added import functionality
+	- massive speed improvement
 
 v0.5 
-	initial upload
+	- initial upload
 

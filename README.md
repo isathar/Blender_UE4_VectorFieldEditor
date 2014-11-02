@@ -1,7 +1,7 @@
-Blender_UE4_VectorFieldEditor
-=============================
+Blender - UE4 - FGA Vector Field Editor
+=======================================
 
-Adds support for creating vector fields and exporting/importing the FGA format.
+Adds support for creating vector fields with a particle system and exporting/importing the FGA format used for GPU particles in Unreal Engine 4.
 
 
 -------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ Installation:
 -------------
 
 - Extract to your Blender\#.##\scripts\addons folder
-- enable in the addon manager (named "Vector Field Tools")
+- Enable in the addon manager (named "FGA Vector Field Tools")
 
 ---------------------------------------------------------------------------------------------------------
 
@@ -34,8 +34,8 @@ Notes:
 
 - Enabling the display of velocity lines on large fields will slow things down.
 
-- Remember, the higher the amount of particles you are simulating, the more memory and processing power will be needed.
-	- baking particle transforms for a very dense (64base +) vector field can take a while.
+- The higher the amount of particles you are simulating, the more memory and processing power will be needed.
+	- baking particle transforms for a very dense (>64x64x64) vector field can take a while.
 
 
 The usual disclaimers apply, i.e. don't blame me if anything breaks :D (it shouldn't... I'm just covering myself)
@@ -49,41 +49,55 @@ Usage:
 
 *Creating:*
 
-- set x,y,z resolution
-- set scale
-- click generate
-(number of vectors in field is shown below this button)
+- Set the resolution (X,Y,Z)
+- Set the scale (Size multiplier for the volume's bounds)
+- Click *Generate*
+- *NOTE:* the number of vectors in the vertex field is shown below this button
 
 
 *Editing:*
 
-- select the VF_Volume_X object (floating points, not the bounds) to change its particle settings
-- add any forces you want influencing the particles to the scene
-- NOTE: you can scale the field, move it around, etc since only the saved velocities and editor density/scale are exported
-- bake the particle system's frames (not required, but it can speed things up for dense vector fields)
-- select the frame you want the exported velocities to be based on
-- click "Calculate"
+- Select the *VF_Volume_X* object (the floating points, not the bounds) to change its particle settings
+- Add any forces you want influencing the particles to the scene
+- *NOTE:* you can scale the field, move it around, etc. since only the saved velocities and editor density/scale are exported
+- Bake the particle system's frames (not required, but it can speed things up for dense vector fields)
+- Select the frame you want the exported velocities to be based on
+- Click *Calculate* to save the current particle velocities
 
 
 *Curve Path Tool:*
 
-(creates small wind forces along a line to make particles flow, basically a wind tunnel)
-
-- create a curve object, shape it in the path you want particles to follow
-- any kind of curve (point curve, bezier and nurbs) should be supported, including circles + knots
-- with the object selected, the curve path panel should be populated with settings to change
-- click create
-- this acts like any other forcefields, so the same instructions to save apply
+- Creates small wind forces along a line to make particles flow (basically a wind tunnel)
+- Create a curve object, shape it in the path you want particles to follow
+- *NOTE:* Any kind of curve (point curve, bezier and nurbs) should be supported, including circles + knots
+- With the curve object selected, the *Curve Path* panel should be populated with settings you can customize
+- Click *Create*
+- This object acts like any other forcefield and can be moved.
+- *NOTE:* Scaling and rotating the line after adding the force field will have strange results.
 
 
 *Exporting:*
 
-- the export button is invisible by default and becomes visible once there is something to export
-- click Calculate to create the data that is exported
-- click export
+- If exporting is not possible, th button will be replaced with text explaining what's going on.
+- Select the *VF_Volume_X* object (the floating points)
+- Click *Export*
 
 
 *Importing:*
 
-- click the import button in the top of the panel, select the file
-- the script will now generate a new vector field of the dimensions in the file and populate its velocities list
+- Click the *Import* button in the top of the panel, select the file
+- The script will now generate a new vector field of the dimensions in the file and populate its velocities list
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+Changelog:
+
+v0.8 
+	added import functionality
+	massive speed improvement
+
+v0.5 
+	initial upload
+

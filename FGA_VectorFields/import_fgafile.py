@@ -129,7 +129,7 @@ class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
 					linecount += 1
 				
 				if linecount < 3:
-					print ("File is corrupt")
+					print ("Import Failed: File is corrupt")
 				else:
 					if len(tempvelList) > 0:
 						print ("Setting up new object...")
@@ -141,9 +141,9 @@ class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
 				
 				file.close()
 			else:
-				print ("File not found...")
+				print ("Import Failed: File not found...")
 		else:
-			print ("Filepath not found...")
+			print ("Import Failed: Path not found...")
 		
 		return {'FINISHED'}
 

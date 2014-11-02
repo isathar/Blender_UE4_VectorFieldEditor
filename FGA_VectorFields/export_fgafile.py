@@ -3,11 +3,7 @@ import bpy
 import math
 from mathutils import Vector
 
-from bpy.props import (StringProperty,
-					   BoolProperty,
-					   FloatProperty,
-					   EnumProperty,
-					   )
+from bpy.props import StringProperty
 
 from bpy_extras.io_utils import (ExportHelper,
 								 path_reference_mode)

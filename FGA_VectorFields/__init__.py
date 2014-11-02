@@ -16,6 +16,7 @@ from bpy.types import Panel
 
 from . import vf_editor
 from . import export_fgafile
+from . import import_fgafile
 
 
 # UI Panel
@@ -36,19 +37,27 @@ class vectorfieldtools_panel(bpy.types.Panel):
 	def draw(self, context):
 		layout = self.layout
 		
-		# Export (TBD:import)
+		# Import/Export
+		box = layout.box()
+		row = box.row()
 		if context.active_object != None:
 			if ("VF_Volume" in str(context.active_object.name)) and ('vf_startlocations' in bpy.context.active_object) and ('custom_vectorfield' in bpy.context.active_object):
-				row = layout.row()
 				row.operator('object.export_vectorfieldfile', text='Export')
-				row = layout.row()
-				row = layout.row()
+			elif ("VF_Volume" in str(context.active_object.name)) and (not (('vf_startlocations' in bpy.context.active_object) and ('custom_vectorfield' in bpy.context.active_object))):
+				label = box.label("no velocities", 'NONE')
+			else:
+				label = box.label("not a volume", 'NONE')
+		else:
+			label = box.label("no object", 'NONE')
+		#row = box.row()
+		#row.operator('object.import_vectorfieldfile', text='Import')
+		row = layout.row()
 		
 		# Create
 		box = layout.box()
 		label = box.label("  Create", 'NONE')
 		row = box.row()
-		row.column().prop(bpy.context.window_manager, 'fieldDensity', text='Density')
+		row.column().prop(bpy.context.window_manager, 'fieldDensity', text='Resolution')
 		row = box.row()
 		row.column().prop(bpy.context.window_manager, 'fieldScale', text='Scale:')
 		row = box.row()
@@ -56,13 +65,14 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		numObjects = bpy.context.window_manager.fieldDensity[0] * bpy.context.window_manager.fieldDensity[1] * bpy.context.window_manager.fieldDensity[2]
 		row = box.row()
 		label = row.label("# of vectors: " + str(numObjects), 'NONE')
+		row = layout.row()
 		
 		# Edit
 		box = layout.box()
 		label = box.label("  Save", 'NONE')
 		row = box.row(align=True)
 		row.operator('object.calc_vectorfieldvelocities', text='Calculate')
-		
+		row = layout.row()
 		
 		# Display
 		box = layout.box()
@@ -72,6 +82,7 @@ class vectorfieldtools_panel(bpy.types.Panel):
 			row.operator('view3d.toggle_vectorfieldvelocities', text='Show')
 		else:
 			row.operator('view3d.toggle_vectorfieldvelocities', text='Hide')
+		row = layout.row()
 		
 		# Tools:
 		box = layout.box()
@@ -105,7 +116,7 @@ class vectorfieldtools_panel(bpy.types.Panel):
 # init stuff:
 class vector_field(bpy.types.PropertyGroup):
 	vvelocity = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0))
-
+	vstartloc = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0))
 
 def initdefaults():
 	bpy.types.Object.custom_vectorfield = bpy.props.CollectionProperty(type=vector_field)
@@ -137,16 +148,16 @@ def clearvars():
 
 def register():
 	bpy.utils.register_class(vector_field)
+	
 	bpy.utils.register_class(vf_editor.calc_vectorfieldvelocities)
-	bpy.utils.register_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.register_class(vf_editor.create_vectorfield)
 	bpy.utils.register_class(vf_editor.calc_pathalongspline)
-	
-	
 	bpy.utils.register_class(vf_editor.toggle_vectorfieldvelocities)
 	
-	bpy.utils.register_class(vectorfieldtools_panel)
+	bpy.utils.register_class(export_fgafile.export_vectorfieldfile)
+	bpy.utils.register_class(import_fgafile.import_vectorfieldfile)
 	
+	bpy.utils.register_class(vectorfieldtools_panel)
 	
 	initdefaults()
 
@@ -155,13 +166,12 @@ def unregister():
 	bpy.utils.unregister_class(vectorfieldtools_panel)
 	
 	bpy.utils.unregister_class(vf_editor.calc_vectorfieldvelocities)
-	bpy.utils.unregister_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.unregister_class(vf_editor.create_vectorfield)
 	bpy.utils.unregister_class(vf_editor.calc_pathalongspline)
-	
-	
-	
 	bpy.utils.unregister_class(vf_editor.toggle_vectorfieldvelocities)
+	
+	bpy.utils.unregister_class(export_fgafile.export_vectorfieldfile)
+	bpy.utils.unregister_class(import_fgafile.import_vectorfieldfile)
 	
 	bpy.utils.unregister_class(vector_field)
 	

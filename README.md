@@ -8,7 +8,7 @@ Installation:
 - enable in the addon manager (named "Vector Field Tools")
 
 
-rough instructions: (WIP)
+rough instructions (WIP):
 
 
 notes: 
@@ -33,7 +33,7 @@ instructions:
 (number of vectors in field is shown below this button)
 
 
-	editing
+	editing:
 
 - select the VF_Volume_X object (floating points, not the bounds) to change its particle settings
 - add any forces you want influencing the particles to the scene
@@ -53,15 +53,15 @@ instructions:
 - this acts like any other forcefields, so the same instructions to save apply
 
 
-	export
+	export:
 
 - the export button is invisible by default and becomes visible once there is something to export
 - click Calculate to create the data that is exported
 - click export
 
 
-(not finished:)
-	import
+(not finished)
+	import:
 
 - click the import button in the top of the panel, select the file
 - the script will now generate a new vector field of the dimensions in the file and populate its velocities list

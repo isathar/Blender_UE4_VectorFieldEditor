@@ -22,8 +22,8 @@ Notes:
 - Blender will briefly freeze (or hitch) while generating vector fields and saving velocities
 - vector fields generate pretty quickly, (on an older Core i5 CPU) less than a second for 32x32x32 and below, around 20 seconds for a 128x128x128 density field
 (compared to my first few attempts, which ate through 3 GB RAM and froze Blender for 20 minutes on a 16-base vector field)
-	- Here is a list of generation timeson my system with different field sizes for reference:
-		
+	- Here is a list of generation times on my system with different field sizes for reference:
+		- 32x32x32: 0.2707s, 64x64x64: 2.2122s, 128x128x128: 18.1358s
 
 - Performance while editing reasonably sized (< 1 million vertices) vector fields seems good.
 	- I noticed a slight drop in framerate when displaying a 128-base field, but editing it was incredibly slow

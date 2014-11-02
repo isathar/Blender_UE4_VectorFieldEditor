@@ -60,7 +60,6 @@ instructions:
 - click export
 
 
-(not finished)
 	import:
 
 - click the import button in the top of the panel, select the file

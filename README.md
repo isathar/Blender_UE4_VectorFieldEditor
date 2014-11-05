@@ -4,6 +4,9 @@ Blender - UE4 - FGA Vector Field Editor
 Adds support for creating vector fields with a particle system and exporting/importing the FGA format used for GPU particles in Unreal Engine 4.
 
 
+*This readme is a work in progress*
+
+
 -------------------------------------------------------------------------------------------------------
 
 
@@ -63,17 +66,21 @@ Usage:
 - Bake the particle system's frames (not required, but it can speed things up for dense vector fields)
 - Select the frame you want the exported velocities to be based on
 - Click *Calculate* to save the current particle velocities
+- Check *Normalize* if you want all velocities to have the same magnitude
+	- this makes small forces have a greater impact and clamps all force magnitudes to 1.0
 
 
 *Curve Path Tool:*
 
 - Creates small wind forces along a line to make particles flow (basically a wind tunnel)
+
 - Create a curve object, shape it in the path you want particles to follow
 - *NOTE:* Any kind of curve (point curve, bezier and nurbs) should be supported, including circles + knots
 - With the curve object selected, the *Curve Path* panel should be populated with settings you can customize
 - Click *Create*
 - This object acts like any other forcefield and can be moved.
 - *NOTE:* Scaling and rotating the line after adding the force field will have strange results.
+- Subdivide the curve a few times to add more influence cylinders (for path smoothing)
 
 
 *Exporting:*
@@ -93,6 +100,9 @@ Usage:
 --------------------------------------------------------------------------------------------------------------
 
 Changelog:
+v0.9
+	- another performance tweak
+	- added invert, normalize, disable gravity options
 
 v0.8 
 	- added import functionality

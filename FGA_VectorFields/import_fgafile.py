@@ -15,13 +15,13 @@ def build_importedVectorField(self, context, tempvelList):
 	scaleVal = context.window_manager.fieldScale
 	vertsList = []
 	volcount = 0
-	baseLoc = ((-1.0 * densityVal) * 0.25) * scaleVal
+	baseLoc = ((-1.0 * densityVal) * 0.25) + Vector([0.25,0.25,0.25])
 	totalvertscount = densityVal[0] * densityVal[1] * densityVal[2]
 	xval = int(densityVal[0])
 	yval = int(densityVal[1])
 	zval = int(densityVal[2])
 	
-	bpy.ops.mesh.primitive_plane_add(location=(0.0, 0.0, 0.0))
+	bpy.ops.mesh.primitive_plane_add(location=(0.0,0.0,0.0))
 	
 	for v in range(len(context.scene.objects)):
 		if ("VF_Volume" in str(context.scene.objects[v].name)):
@@ -38,14 +38,17 @@ def build_importedVectorField(self, context, tempvelList):
 	for i in range(zval):
 		for j in range(yval):
 			for k in range(xval):
-				vertsList.append(Vector([baseLoc[0] + ((k * 0.5) * scaleVal) + (0.25 * scaleVal),baseLoc[1] + ((j * 0.5) * scaleVal) + (0.25 * scaleVal),baseLoc[2] + ((i * 0.5) * scaleVal) + (0.25 * scaleVal)]))
+				vertsList.append((baseLoc + Vector([(k * 0.5),(j * 0.5),(i * 0.5)])) * scaleVal)
+	
+	bpy.ops.object.particle_system_add()
+	psettings = context.active_object.particle_systems[0].settings
 	
 	me = context.active_object.data
 	me.update()
 	me.vertices.add(totalvertscount)
-	me.update()
 	
-	# save startlocations for display
+	meshverts = [v for v in me.vertices]
+	
 	context.active_object.custom_vectorfield.clear()
 	
 	for l in range(len(me.vertices)):
@@ -54,10 +57,12 @@ def build_importedVectorField(self, context, tempvelList):
 		tempvertdata.vvelocity = tempvelList[l]
 		tempvertdata.vstartloc = vertsList[l]
 	
+	me.update()
+	
+	vertsList = []
+	meshverts = []
 	
 	# create the particle system
-	bpy.ops.object.particle_system_add()
-	psettings = context.active_object.particle_systems[0].settings
 	psettings.count = totalvertscount
 	psettings.emit_from = 'VERT'
 	psettings.normal_factor = 0.0
@@ -65,11 +70,13 @@ def build_importedVectorField(self, context, tempvelList):
 	psettings.frame_end = 1
 	psettings.lifetime = 32
 	psettings.grid_resolution = 1
+	if context.window_manager.field_disablegravity:
+		psettings.effector_weights.gravity = 0.0
 	
 	volMesh = context.active_object
 	
 	# create the bounding box
-	bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0))
+	bpy.ops.mesh.primitive_cube_add(location=(0.0,0.0,0.0))
 	context.active_object.name = 'VF_Bounds_' + str(volcount)
 	
 	context.active_object.scale = (densityVal * 0.25) * scaleVal
@@ -81,11 +88,7 @@ def build_importedVectorField(self, context, tempvelList):
 	
 	volMesh.parent = context.active_object
 	
-	#stop = timeit.default_timer()
-	#print (stop - start)
-	
 	return {'FINISHED'}
-
 
 
 class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
@@ -103,9 +106,7 @@ class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
 			if os.path.isfile(self.filepath):
 				file = open(self.filepath, 'r')
 				
-				print (file)
 				linecount = 0
-				
 				tempvelList = []
 				
 				for line in file:
@@ -134,10 +135,6 @@ class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
 					if len(tempvelList) > 0:
 						print ("Setting up new object...")
 						build_importedVectorField(self, context, tempvelList)
-						
-				
-				print (len(tempvelList))
-				
 				
 				file.close()
 			else:

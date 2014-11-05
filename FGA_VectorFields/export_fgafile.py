@@ -3,10 +3,9 @@ import bpy
 import math
 from mathutils import Vector
 
-from bpy.props import StringProperty
+from bpy.props import (StringProperty,FloatProperty)
 
-from bpy_extras.io_utils import (ExportHelper,
-								 path_reference_mode)
+from bpy_extras.io_utils import (ExportHelper,path_reference_mode)
 
 
 
@@ -17,6 +16,8 @@ class export_vectorfieldfile(bpy.types.Operator, ExportHelper):
 
 	filename_ext = ".fga"
 	filter_glob = StringProperty(default="*.fga", options={'HIDDEN'})
+	
+	exportfieldscale = FloatProperty(name="Scale",min=1.0,max=1000.0,soft_min=1.0, soft_max=1000.0,default=1.0)
 	
 	def check_extension(self):
 		return self.batch_mode == 'OFF'
@@ -37,9 +38,9 @@ class export_vectorfieldfile(bpy.types.Operator, ExportHelper):
 		# Resolution:
 		fw("%f,%f,%f," % (context.window_manager.fieldDensity[0],context.window_manager.fieldDensity[1],context.window_manager.fieldDensity[2]))
 		# MinimumXYZ:
-		fw("\n%f,%f,%f," % (((context.window_manager.fieldDensity[0] * -0.5) * context.window_manager.fieldScale),((context.window_manager.fieldDensity[1] * -0.5) * context.window_manager.fieldScale),((context.window_manager.fieldDensity[2] * -0.5) * context.window_manager.fieldScale)))
+		fw("\n%f,%f,%f," % (((context.window_manager.fieldDensity[0] * -0.5) * context.window_manager.fieldScale) * self.exportfieldscale,((context.window_manager.fieldDensity[1] * -0.5) * context.window_manager.fieldScale) * self.exportfieldscale,((context.window_manager.fieldDensity[2] * -0.5) * context.window_manager.fieldScale) * self.exportfieldscale))
 		# MaximumXYZ:
-		fw("\n%f,%f,%f," % ((context.window_manager.fieldDensity[0] * 0.5) * context.window_manager.fieldScale,(context.window_manager.fieldDensity[1] * 0.5) * context.window_manager.fieldScale,(context.window_manager.fieldDensity[2] * 0.5) * context.window_manager.fieldScale))
+		fw("\n%f,%f,%f," % (((context.window_manager.fieldDensity[0] * 0.5) * context.window_manager.fieldScale) * self.exportfieldscale,((context.window_manager.fieldDensity[1] * 0.5) * context.window_manager.fieldScale) * self.exportfieldscale,((context.window_manager.fieldDensity[2] * 0.5) * context.window_manager.fieldScale) * self.exportfieldscale))
 		
 		for vec in context.object.custom_vectorfield:
 			fw("\n%f,%f,%f," % (vec.vvelocity[0],vec.vvelocity[1],vec.vvelocity[2]))

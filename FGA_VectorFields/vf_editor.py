@@ -9,6 +9,7 @@ import bmesh
 import bgl
 
 
+# saves velocities for export
 class calc_vectorfieldvelocities(bpy.types.Operator):
 	bl_idname = 'object.calc_vectorfieldvelocities'
 	bl_label = 'Save VF EndLocations'
@@ -24,15 +25,18 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			return True
 	
 	def execute(self, context):
+		particleslist = [p for p in context.active_object.particle_systems[0].particles]
 		
-		if context.window_manager.use_pvelocity:
-			for i in range(len(context.active_object.particle_systems[0].particles)):
-				newvelocity = context.active_object.particle_systems[0].particles[i].velocity
-				context.active_object.custom_vectorfield[i].vvelocity = newvelocity
+		for i in range(len(particleslist)):
+			if context.window_manager.normalize_pvelocity:
+				context.active_object.custom_vectorfield[i].vvelocity = Vector(particleslist[i].velocity).normalized()
+			else:
+				context.active_object.custom_vectorfield[i].vvelocity = Vector(particleslist[i].velocity)
 			
 		return {'FINISHED'}
 
 
+# creates a wind tunnel from a curve object
 class calc_pathalongspline(bpy.types.Operator):
 	bl_idname = 'object.calc_pathalongspline'
 	bl_label = 'Path along psline'
@@ -59,8 +63,14 @@ class calc_pathalongspline(bpy.types.Operator):
 		curveobj = context.active_object
 		context.active_object.select = False
 		
+		previousnormal = Vector([0.0,0.0,0.0])
+		
 		for i in range(len(curvepoints)):
-			cpoint = Vector(curvepoints[i])
+			cpoint = Vector([0.0,0.0,0.0])
+			cpoint[0] = curvepoints[i][0]
+			cpoint[1] = curvepoints[i][1]
+			cpoint[2] = curvepoints[i][2]
+			
 			bpy.ops.mesh.primitive_plane_add(location=(cpoint))
 			
 			# make empty
@@ -79,14 +89,36 @@ class calc_pathalongspline(bpy.types.Operator):
 			# get the curve's direction between points
 			tempnorm = Vector([0,0,0])
 			if (i < len(curvepoints) - 1):
-				tempnorm = cpoint - Vector(curvepoints[i + 1])
+				cpoint2 = Vector([0.0,0.0,0.0])
+				cpoint2[0] = curvepoints[i + 1][0]
+				cpoint2[1] = curvepoints[i + 1][1]
+				cpoint2[2] = curvepoints[i + 1][2]
+				tempnorm = cpoint - cpoint2
+				if i > 0:
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+				previousnormal = tempnorm
 			else:
 				if curveobj.data.splines[0].use_cyclic_u or curveobj.data.splines[0].use_cyclic_u:
-					tempnorm = cpoint - Vector(curvepoints[0])
+					cpoint2 = Vector([0.0,0.0,0.0])
+					cpoint2[0] = curvepoints[0][0]
+					cpoint2[1] = curvepoints[0][1]
+					cpoint2[2] = curvepoints[0][2]
+					tempnorm = cpoint - cpoint2
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+					previousnormal = tempnorm
 				else:
-					tempnorm = Vector(curvepoints[i - 1]) - cpoint
+					cpoint2 = Vector([0.0,0.0,0.0])
+					cpoint2[0] = curvepoints[i - 1][0]
+					cpoint2[1] = curvepoints[i - 1][1]
+					cpoint2[2] = curvepoints[i - 1][2]
+					tempnorm = cpoint2 - cpoint
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+					previousnormal = tempnorm
 					
-			if abs(tempnorm.length) > 0:
+			if abs(tempnorm.length) > 0.0:
 				z = Vector((0,0,1))
 				angle = tempnorm.angle(z)
 				axis = z.cross(tempnorm)
@@ -97,7 +129,7 @@ class calc_pathalongspline(bpy.types.Operator):
 			objs = context.active_object.constraints.new(type='COPY_LOCATION')
 			objs.use_offset = True
 			objs.target = curveobj
-			
+		
 		return {'FINISHED'}
 		
 		
@@ -117,7 +149,7 @@ class create_vectorfield(bpy.types.Operator):
 		scaleVal = context.window_manager.fieldScale
 		vertsList = []
 		volcount = 0
-		baseLoc = ((-1.0 * densityVal) * 0.25) * scaleVal
+		baseLoc = ((-1.0 * densityVal) * 0.25) + Vector([0.25,0.25,0.25])
 		totalvertscount = densityVal[0] * densityVal[1] * densityVal[2]
 		xval = int(densityVal[0])
 		yval = int(densityVal[1])
@@ -127,7 +159,7 @@ class create_vectorfield(bpy.types.Operator):
 		#start = timeit.default_timer()
 		
 		# create the volume
-		bpy.ops.mesh.primitive_plane_add(location=(0.0, 0.0, 0.0))
+		bpy.ops.mesh.primitive_plane_add(location=(0.0,0.0,0.0))
 		
 		for v in range(len(context.scene.objects)):
 			if ("VF_Volume" in str(context.scene.objects[v].name)):
@@ -140,31 +172,37 @@ class create_vectorfield(bpy.types.Operator):
 		bpy.ops.mesh.delete(type='VERT')
 		bpy.ops.object.mode_set(mode='OBJECT')
 		
-		
-		# create vertices
+		# create vertices + initialize velocities list
 		for i in range(zval):
 			for j in range(yval):
 				for k in range(xval):
-					vertsList.append(Vector([baseLoc[0] + ((k * 0.5) * scaleVal) + (0.25 * scaleVal),baseLoc[1] + ((j * 0.5) * scaleVal) + (0.25 * scaleVal),baseLoc[2] + ((i * 0.5) * scaleVal) + (0.25 * scaleVal)]))
+					vertsList.append((baseLoc + Vector([(k * 0.5),(j * 0.5),(i * 0.5)])) * scaleVal)
+		
+		bpy.ops.object.particle_system_add()
+		psettings = context.active_object.particle_systems[0].settings
 		
 		me = context.active_object.data
 		me.update()
 		me.vertices.add(totalvertscount)
-		me.update()
 		
-		# save startlocations for display
+		meshverts = [v for v in me.vertices]
+		
 		context.active_object.custom_vectorfield.clear()
 		
-		for l in range(len(me.vertices)):
-			me.vertices[l].co = vertsList[l]
+		for l in range(len(meshverts)):
+			tempv = vertsList[l]
+			meshverts[l].co = tempv
 			tempvertdata = context.active_object.custom_vectorfield.add()
 			tempvertdata.vvelocity = Vector([0.0,0.0,0.0])
-			tempvertdata.vstartloc = vertsList[l]
+			tempvertdata.vstartloc = tempv
 		
+		me.update()
+		
+		vertsList = []
+		meshverts = []
 		
 		# create the particle system
-		bpy.ops.object.particle_system_add()
-		psettings = context.active_object.particle_systems[0].settings
+		
 		psettings.count = totalvertscount
 		psettings.emit_from = 'VERT'
 		psettings.normal_factor = 0.0
@@ -172,12 +210,13 @@ class create_vectorfield(bpy.types.Operator):
 		psettings.frame_end = 1
 		psettings.lifetime = 32
 		psettings.grid_resolution = 1
+		if context.window_manager.field_disablegravity:
+			psettings.effector_weights.gravity = 0.0
 		
 		volMesh = context.active_object
 		
-		
 		# create the bounding box
-		bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.0, 0.0))
+		bpy.ops.mesh.primitive_cube_add(location=(0.0,0.0,0.0))
 		context.active_object.name = 'VF_Bounds_' + str(volcount)
 		
 		context.active_object.scale = (densityVal * 0.25) * scaleVal
@@ -191,6 +230,24 @@ class create_vectorfield(bpy.types.Operator):
 		
 		#stop = timeit.default_timer()
 		#print (stop - start)
+		
+		return {'FINISHED'}
+
+
+# Inverts saved velocities
+class invert_velocities(bpy.types.Operator):
+	bl_idname = 'object.invert_velocities'
+	bl_label = 'Invert Velocities'
+	bl_description = 'Inverts the saved velocities'
+
+	@classmethod
+	def poll(cls, context):
+		return True
+	
+	def execute(self, context):
+		for v in context.active_object.custom_vectorfield:
+			if abs(Vector(v.vvelocity).length) > 0.0:
+				v.vvelocity = Vector(v.vvelocity) * -1.0
 		
 		return {'FINISHED'}
 
@@ -274,8 +331,8 @@ def draw_vectorfield(self, context):
 	
 	showList = [v for v in context.active_object.custom_vectorfield if abs(Vector(v.vvelocity).length) > 0.0]
 	
-	for i in range(len(showList)):
-		draw_line(showList[i].vstartloc, showList[i].vvelocity, dispcol, 2.0, dispscale)
+	for vl in showList:
+		draw_line(vl.vstartloc, vl.vvelocity, dispcol, 2.0, dispscale)
 			
 	bgl.glDisable(bgl.GL_BLEND)
 

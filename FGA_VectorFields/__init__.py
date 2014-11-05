@@ -1,10 +1,10 @@
 bl_info = {
-	"name": "Vector Field Tools",
+	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (0, 5, 0),
+	"version": (0, 9, 0),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
-	"description": " Editor and exporter for FGA vector fields used for GPU particles",
+	"description": " Editor and exporter/importer for FGA vector fields used for GPU particles in UE4",
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
@@ -41,9 +41,9 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		box = layout.box()
 		row = box.row()
 		if context.active_object != None:
-			if ("VF_Volume" in str(context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
+			if ("VF_Volume" in (context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
 				row.operator('object.export_vectorfieldfile', text='Export')
-			elif ("VF_Volume" in str(context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
+			elif ("VF_Volume" in (context.active_object.name)) and ('custom_vectorfield' in bpy.context.active_object):
 				label = box.label("no velocities", 'NONE')
 			else:
 				label = box.label("not a volume", 'NONE')
@@ -62,6 +62,9 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		row.column().prop(bpy.context.window_manager, 'fieldScale', text='Scale:')
 		row = box.row()
 		row.operator('object.create_vectorfield', text='Generate')
+		row = box.row()
+		row.column().prop(bpy.context.window_manager, 'field_disablegravity', text='No gravity')
+		
 		numObjects = bpy.context.window_manager.fieldDensity[0] * bpy.context.window_manager.fieldDensity[1] * bpy.context.window_manager.fieldDensity[2]
 		row = box.row()
 		label = row.label("# of vectors: " + str(numObjects), 'NONE')
@@ -72,6 +75,10 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		label = box.label("  Save", 'NONE')
 		row = box.row(align=True)
 		row.operator('object.calc_vectorfieldvelocities', text='Calculate')
+		row = box.row(align=True)
+		row.column().prop(bpy.context.window_manager, 'normalize_pvelocity',text='Normalize')
+		row = box.row(align=True)
+		row.operator('object.invert_velocities', text='Invert')
 		row = layout.row()
 		
 		# Display
@@ -113,21 +120,24 @@ class vectorfieldtools_panel(bpy.types.Panel):
 			label = row.label("Select a curve", 'NONE')
 
 
+
 # init stuff:
 class vector_field(bpy.types.PropertyGroup):
 	vvelocity = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0))
 	vstartloc = bpy.props.FloatVectorProperty(default=(0.0, 0.0, 0.0))
 
+
 def initdefaults():
 	bpy.types.Object.custom_vectorfield = bpy.props.CollectionProperty(type=vector_field)
-	bpy.types.Object.vf_startlocations = bpy.props.CollectionProperty(type=vector_field)
 		
 	bpy.types.WindowManager.fieldDensity = bpy.props.IntVectorProperty(default=(4,4,4),subtype='TRANSLATION',min=1)
 	bpy.types.WindowManager.fieldScale = bpy.props.IntProperty(default=1,min=1)
 	
+	bpy.types.WindowManager.field_disablegravity = bpy.props.BoolProperty(default=False)
+	
 	bpy.types.WindowManager.showing_vectorfield = bpy.props.IntProperty(default=-1)
 	
-	bpy.types.WindowManager.use_pvelocity = bpy.props.BoolProperty(default=True)
+	bpy.types.WindowManager.normalize_pvelocity = bpy.props.BoolProperty(default=False)
 	
 	bpy.types.WindowManager.curveForce_strength = bpy.props.FloatProperty(default=8.0)
 	bpy.types.WindowManager.curveForce_maxDist = bpy.props.FloatProperty(default=4.0)
@@ -135,7 +145,7 @@ def initdefaults():
 
 
 def clearvars():
-	props = ['fieldDensity','fieldScale','showing_vectorfield','use_pvelocity','curveForce_strength','curveForce_maxDist','curveForce_falloffPower']
+	props = ['fieldDensity','fieldScale','field_disablegravity','showing_vectorfield','normalize_pvelocity','curveForce_strength','curveForce_maxDist','curveForce_falloffPower']
 	for p in props:
 		if bpy.context.window_manager.get(p) != None:
 			del bpy.context.window_manager[p]
@@ -153,6 +163,7 @@ def register():
 	bpy.utils.register_class(vf_editor.create_vectorfield)
 	bpy.utils.register_class(vf_editor.calc_pathalongspline)
 	bpy.utils.register_class(vf_editor.toggle_vectorfieldvelocities)
+	bpy.utils.register_class(vf_editor.invert_velocities)
 	
 	bpy.utils.register_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.register_class(import_fgafile.import_vectorfieldfile)
@@ -169,6 +180,7 @@ def unregister():
 	bpy.utils.unregister_class(vf_editor.create_vectorfield)
 	bpy.utils.unregister_class(vf_editor.calc_pathalongspline)
 	bpy.utils.unregister_class(vf_editor.toggle_vectorfieldvelocities)
+	bpy.utils.unregister_class(vf_editor.invert_velocities)
 	
 	bpy.utils.unregister_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.unregister_class(import_fgafile.import_vectorfieldfile)

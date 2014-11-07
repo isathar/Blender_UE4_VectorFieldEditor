@@ -73,9 +73,10 @@ Usage:
 - Select the frame you want the exported velocities to be based on
 - Click *Calculate* to save the current particle velocities
 - Select the generation method from the *Method* dropdown. Info on each method:
-	-- *Replace*  	- Default method, sets the velocities of the vector field to the particle system's current velocities
-	-- *Additive* 	- Adds the current particle velocities to the vector field's current velocities
-	-- *Average*	- Sets the velocities of the vector field to the mean of the particle velocities and currently stored velocities
+-	-- *Replace*  	- Default method, sets the velocities of the vector field to the particle system's current velocities
+-	-- *Additive* 	- Adds the current particle velocities to the vector field's current velocities
+-	-- *Average*	- Sets the velocities of the vector field to the mean of the particle velocities and currently stored velocities
+
 - Check *Normalize* if you want all velocities to have the same magnitude
 	- this makes small forces have a greater impact and clamps all force magnitudes to 1.0
 - Check *Invert* to read the inverse of current particle velocities while generating

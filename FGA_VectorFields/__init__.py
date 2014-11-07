@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (0, 9, 0),
+	"version": (0, 9, 1),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Editor and exporter/importer for FGA vector fields used for GPU particles in UE4",
@@ -75,10 +75,14 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		label = box.label("  Save", 'NONE')
 		row = box.row(align=True)
 		row.operator('object.calc_vectorfieldvelocities', text='Calculate')
+		row = box.row()
+		label = row.label(" Method:", 'NONE')
+		row = box.row()
+		row.column().prop(bpy.context.window_manager, 'velocities_genmode', text='')
 		row = box.row(align=True)
 		row.column().prop(bpy.context.window_manager, 'normalize_pvelocity',text='Normalize')
 		row = box.row(align=True)
-		row.operator('object.invert_velocities', text='Invert')
+		row.column().prop(bpy.context.window_manager, 'invert_pvelocity',text='Invert')
 		row = layout.row()
 		
 		# Display
@@ -112,6 +116,8 @@ class vectorfieldtools_panel(bpy.types.Panel):
 				row = box.row(align=True)
 				row.column().prop(bpy.context.window_manager, 'curveForce_falloffPower', text='')
 				row = box.row(align=True)
+				row.column().prop(bpy.context.window_manager, 'curveForce_trailout', text='Trail')
+				row = box.row(align=True)
 				row = box.row(align=True)
 				row.operator('object.calc_pathalongspline', text='Create')
 			else:
@@ -138,14 +144,24 @@ def initdefaults():
 	bpy.types.WindowManager.showing_vectorfield = bpy.props.IntProperty(default=-1)
 	
 	bpy.types.WindowManager.normalize_pvelocity = bpy.props.BoolProperty(default=False)
+	bpy.types.WindowManager.invert_pvelocity = bpy.props.BoolProperty(default=False)
+	bpy.types.WindowManager.velocities_genmode = bpy.props.EnumProperty(
+			name="Method",
+			items=(('REP', "Replace", "Overwrite old velocities"),
+				   ('ADD', "Additive", "Add new velocities to existing ones"),
+				   ('AVG', "Average", "Get the average of old and new velocities"),
+				   ),
+			default='REP',
+			)
 	
 	bpy.types.WindowManager.curveForce_strength = bpy.props.FloatProperty(default=8.0)
 	bpy.types.WindowManager.curveForce_maxDist = bpy.props.FloatProperty(default=4.0)
 	bpy.types.WindowManager.curveForce_falloffPower = bpy.props.FloatProperty(default=2.0)
+	bpy.types.WindowManager.curveForce_trailout = bpy.props.BoolProperty(default=False)
 
 
 def clearvars():
-	props = ['fieldDensity','fieldScale','field_disablegravity','showing_vectorfield','normalize_pvelocity','curveForce_strength','curveForce_maxDist','curveForce_falloffPower']
+	props = ['fieldDensity','fieldScale','field_disablegravity','velocities_genmode','showing_vectorfield','normalize_pvelocity','curveForce_strength','curveForce_maxDist','curveForce_falloffPower']
 	for p in props:
 		if bpy.context.window_manager.get(p) != None:
 			del bpy.context.window_manager[p]
@@ -163,7 +179,6 @@ def register():
 	bpy.utils.register_class(vf_editor.create_vectorfield)
 	bpy.utils.register_class(vf_editor.calc_pathalongspline)
 	bpy.utils.register_class(vf_editor.toggle_vectorfieldvelocities)
-	bpy.utils.register_class(vf_editor.invert_velocities)
 	
 	bpy.utils.register_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.register_class(import_fgafile.import_vectorfieldfile)
@@ -180,7 +195,6 @@ def unregister():
 	bpy.utils.unregister_class(vf_editor.create_vectorfield)
 	bpy.utils.unregister_class(vf_editor.calc_pathalongspline)
 	bpy.utils.unregister_class(vf_editor.toggle_vectorfieldvelocities)
-	bpy.utils.unregister_class(vf_editor.invert_velocities)
 	
 	bpy.utils.unregister_class(export_fgafile.export_vectorfieldfile)
 	bpy.utils.unregister_class(import_fgafile.import_vectorfieldfile)

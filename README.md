@@ -54,8 +54,14 @@ Usage:
 
 - Set the resolution (X,Y,Z)
 - Set the scale (Size multiplier for the volume's bounds)
+- Checking *No Gravity* will disable gravity's influence on the generated particle system (Gravity field weight set to 0)
 - Click *Generate*
 - *NOTE:* the number of vectors in the vector field is shown below this button
+
+
+*Importing:*
+
+- Click *Import*, select your vector field file
 
 
 *Editing:*
@@ -66,8 +72,13 @@ Usage:
 - Bake the particle system's frames (not required, but it can speed things up for dense vector fields)
 - Select the frame you want the exported velocities to be based on
 - Click *Calculate* to save the current particle velocities
+- Select the generation method from the *Method* dropdown. Info on each method:
+	-- *Replace*  	- Default method, sets the velocities of the vector field to the particle system's current velocities
+	-- *Additive* 	- Adds the current particle velocities to the vector field's current velocities
+	-- *Average*	- Sets the velocities of the vector field to the mean of the particle velocities and currently stored velocities
 - Check *Normalize* if you want all velocities to have the same magnitude
 	- this makes small forces have a greater impact and clamps all force magnitudes to 1.0
+- Check *Invert* to read the inverse of current particle velocities while generating
 
 
 *Curve Path Tool:*
@@ -77,10 +88,14 @@ Usage:
 - Create a curve object, shape it in the path you want particles to follow
 - *NOTE:* Any kind of curve (point curve, bezier and nurbs) should be supported, including circles + knots
 - With the curve object selected, the *Curve Path* panel should be populated with settings you can customize
+- Check the *Trails* box if you want the curve's influence to fade as it reaches its end
 - Click *Create*
 - This object acts like any other forcefield and can be moved.
+	-- Moving the curve will move the forcefields attached to it, moving the force fields will offset them from the curve
+
 - *NOTE:* Scaling and rotating the line after adding the force field will have strange results.
 - Subdivide the curve a few times to add more influence cylinders (for path smoothing)
+- Currently, this creates a lot of loose objects on the scene.
 
 
 *Exporting:*
@@ -100,6 +115,12 @@ Usage:
 --------------------------------------------------------------------------------------------------------------
 
 Changelog:
+v0.9.1
+	- added different generation modes: Replace, Additive, Average
+	- added trail option for curve path (fade influence with curve position)
+	- changed the way invert and normalize work
+	- slight calculation performance tweak
+
 v0.9
 	- another performance tweak
 	- added invert, normalize, disable gravity options

@@ -25,14 +25,30 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			return True
 	
 	def execute(self, context):
+		invmult = -1.0 if context.window_manager.invert_pvelocity else 1.0
 		particleslist = [p for p in context.active_object.particle_systems[0].particles]
 		
-		for i in range(len(particleslist)):
-			if context.window_manager.normalize_pvelocity:
-				context.active_object.custom_vectorfield[i].vvelocity = Vector(particleslist[i].velocity).normalized()
-			else:
-				context.active_object.custom_vectorfield[i].vvelocity = Vector(particleslist[i].velocity)
-			
+		# additive
+		if bpy.context.window_manager.velocities_genmode == 'ADD':
+			for i in range(len(particleslist)):
+				if context.window_manager.normalize_pvelocity:
+					context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i].velocity.normalized()) * invmult)
+				else:
+					context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i].velocity) * invmult)
+		# average
+		elif bpy.context.window_manager.velocities_genmode == 'AVG':
+			for i in range(len(particleslist)):
+				if context.window_manager.normalize_pvelocity:
+					context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + (particleslist[i].velocity.normalized() * invmult)) * 0.5
+				else:
+					context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + (particleslist[i].velocity * invmult)) * 0.5
+		# replace
+		else:
+			for i in range(len(particleslist)):
+				if context.window_manager.normalize_pvelocity:
+					context.active_object.custom_vectorfield[i].vvelocity = particleslist[i].velocity.normalized() * invmult
+				else:
+					context.active_object.custom_vectorfield[i].vvelocity = particleslist[i].velocity * invmult
 		return {'FINISHED'}
 
 
@@ -65,6 +81,9 @@ class calc_pathalongspline(bpy.types.Operator):
 		
 		previousnormal = Vector([0.0,0.0,0.0])
 		
+		lastStrength = bpy.context.window_manager.curveForce_strength
+		lastDistance = bpy.context.window_manager.curveForce_maxDist
+		
 		for i in range(len(curvepoints)):
 			cpoint = Vector([0.0,0.0,0.0])
 			cpoint[0] = curvepoints[i][0]
@@ -81,9 +100,15 @@ class calc_pathalongspline(bpy.types.Operator):
 			# turn into forcefield
 			bpy.ops.object.forcefield_toggle()
 			context.active_object.field.type = 'WIND'
-			context.active_object.field.strength = bpy.context.window_manager.curveForce_strength
+			
+			if bpy.context.window_manager.curveForce_trailout:
+				if i > 0:
+					lastStrength = lastStrength * 0.9
+					lastDistance = lastDistance * 0.9
+			
+			context.active_object.field.strength = lastStrength
 			context.active_object.field.use_max_distance = True
-			context.active_object.field.distance_max = bpy.context.window_manager.curveForce_maxDist
+			context.active_object.field.distance_max = lastDistance
 			context.active_object.field.falloff_power = bpy.context.window_manager.curveForce_falloffPower
 			
 			# get the curve's direction between points
@@ -233,23 +258,6 @@ class create_vectorfield(bpy.types.Operator):
 		
 		return {'FINISHED'}
 
-
-# Inverts saved velocities
-class invert_velocities(bpy.types.Operator):
-	bl_idname = 'object.invert_velocities'
-	bl_label = 'Invert Velocities'
-	bl_description = 'Inverts the saved velocities'
-
-	@classmethod
-	def poll(cls, context):
-		return True
-	
-	def execute(self, context):
-		for v in context.active_object.custom_vectorfield:
-			if abs(Vector(v.vvelocity).length) > 0.0:
-				v.vvelocity = Vector(v.vvelocity) * -1.0
-		
-		return {'FINISHED'}
 
 ######Display########
 

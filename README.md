@@ -115,20 +115,26 @@ Usage:
 --------------------------------------------------------------------------------------------------------------
 
 Changelog:
+----------
+
 v0.9.1
+
 	- added different generation modes: Replace, Additive, Average
 	- added trail option for curve path (fade influence with curve position)
 	- changed the way invert and normalize work
 	- slight calculation performance tweak
 
 v0.9
+
 	- another performance tweak
 	- added invert, normalize, disable gravity options
 
 v0.8 
+
 	- added import functionality
 	- massive speed improvement
 
 v0.5 
+
 	- initial upload
 

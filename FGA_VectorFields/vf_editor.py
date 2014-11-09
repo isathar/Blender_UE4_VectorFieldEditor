@@ -172,7 +172,7 @@ class create_vectorfield(bpy.types.Operator):
 	def execute(self, context):
 		densityVal = Vector(context.window_manager.fieldDensity)
 		scaleVal = context.window_manager.fieldScale
-		vertsList = []
+		
 		volcount = 0
 		baseLoc = ((-1.0 * densityVal) * 0.25) + Vector([0.25,0.25,0.25])
 		totalvertscount = densityVal[0] * densityVal[1] * densityVal[2]
@@ -197,12 +197,6 @@ class create_vectorfield(bpy.types.Operator):
 		bpy.ops.mesh.delete(type='VERT')
 		bpy.ops.object.mode_set(mode='OBJECT')
 		
-		# create vertices + initialize velocities list
-		for i in range(zval):
-			for j in range(yval):
-				for k in range(xval):
-					vertsList.append((baseLoc + Vector([(k * 0.5),(j * 0.5),(i * 0.5)])) * scaleVal)
-		
 		bpy.ops.object.particle_system_add()
 		psettings = context.active_object.particle_systems[0].settings
 		
@@ -214,16 +208,21 @@ class create_vectorfield(bpy.types.Operator):
 		
 		context.active_object.custom_vectorfield.clear()
 		
-		for l in range(len(meshverts)):
-			tempv = vertsList[l]
-			meshverts[l].co = tempv
-			tempvertdata = context.active_object.custom_vectorfield.add()
-			tempvertdata.vvelocity = Vector([0.0,0.0,0.0])
-			tempvertdata.vstartloc = tempv
+		# create vertices + initialize velocities list
+		counter = 0
+		for i in range(zval):
+			for j in range(yval):
+				for k in range(xval):
+					tempV = (baseLoc + Vector([(k * 0.5),(j * 0.5),(i * 0.5)])) * scaleVal
+					meshverts[counter].co = tempV
+					tempvertdata = context.active_object.custom_vectorfield.add()
+					tempvertdata.vvelocity = Vector([0.0,0.0,0.0])
+					tempvertdata.vstartloc = tempV
+					counter += 1
 		
 		me.update()
 		
-		vertsList = []
+		
 		meshverts = []
 		
 		# create the particle system
@@ -267,7 +266,7 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 	bl_label = 'Show velocities'
 
 	_handle = None
-
+	
 	@classmethod
 	def poll(cls, context):
 		if context.active_object == None:
@@ -307,22 +306,10 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 
 
 # draw single gl line
-def draw_line(vertexloc, vertexnorm, color, thickness, dispscale):
-	x1 = vertexloc[0]
-	y1 = vertexloc[1]
-	z1 = vertexloc[2]
-
-	x2 = (vertexnorm[0] * dispscale) + vertexloc[0]
-	y2 = (vertexnorm[1] * dispscale) + vertexloc[1]
-	z2 = (vertexnorm[2] * dispscale) + vertexloc[2]
-
-	bgl.glLineWidth(thickness)
-	bgl.glColor4f(*color)
-
-	# draw line
+def draw_line(vertexloc, vertexnorm):
 	bgl.glBegin(bgl.GL_LINES)
-	bgl.glVertex3f(x1,y1,z1)
-	bgl.glVertex3f(x2,y2,z2)
+	bgl.glVertex3f(vertexloc[0],vertexloc[1],vertexloc[2])
+	bgl.glVertex3f(vertexnorm[0] + vertexloc[0],vertexnorm[1] + vertexloc[1],vertexnorm[2] + vertexloc[2])
 	bgl.glEnd()
 
 
@@ -331,17 +318,11 @@ def draw_vectorfield(self, context):
 	if ('custom_vectorfield' not in bpy.context.active_object):
 		return
 	
-	dispscale = 0.25
-	col = [0.0,1.0,0.0]
-	dispcol = (col[0],col[1],col[2],1.0)
-	
 	bgl.glEnable(bgl.GL_BLEND)
-	
-	showList = [v for v in context.active_object.custom_vectorfield if abs(Vector(v.vvelocity).length) > 0.0]
-	
-	for vl in showList:
-		draw_line(vl.vstartloc, vl.vvelocity, dispcol, 2.0, dispscale)
-			
+	#bgl.glLineWidth(2.0)
+	bgl.glColor3f(0.0,1.0,0.0)
+	[draw_line(v.vstartloc, v.vvelocity) for v in context.active_object.custom_vectorfield]
 	bgl.glDisable(bgl.GL_BLEND)
+
 
 #############################

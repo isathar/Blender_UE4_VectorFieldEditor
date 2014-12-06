@@ -528,6 +528,27 @@ def draw_vectorfield(self, context):
 	bgl.glDisable(bgl.GL_BLEND)
 
 
+class update_vfdispoffsets(bpy.types.Operator):
+	bl_idname = "view3d.update_vfdispoffsets"
+	bl_label = 'Update Offsets'
+	bl_description = 'Update location offsets in saved data to match volume bounds offset'
+	
+	@classmethod
+	def poll(cls, context):
+		return context.mode == "OBJECT" and context.active_object != None and 'custom_vectorfield' in context.active_object
+	
+	def execute(self, context):
+		me = context.active_object.data
+		me.update()
+		
+		meshverts = [v.co for v in me.vertices]
+		volmesh = context.active_object.parent
+		
+		for i in range(len(meshverts)):
+			context.active_object.custom_vectorfield[i].vstartloc = meshverts[i] + volmesh.location
+		
+		return {'FINISHED'}
+
 #############################
 
 # Import/Export functions:

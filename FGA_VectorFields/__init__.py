@@ -124,6 +124,8 @@ class vectorfieldtools_panel(bpy.types.Panel):
 			row.operator('view3d.toggle_vectorfieldvelocities', text='Show')
 		else:
 			row.operator('view3d.toggle_vectorfieldvelocities', text='Hide')
+		row = box.row()
+		row.operator('view3d.update_vfdispoffsets', text='Update Offsets')
 		row = layout.row()
 		
 		# Tools:
@@ -220,10 +222,10 @@ def initdefaults():
 			)
 	
 	# curve force
-	bpy.types.WindowManager.curveForce_strength = bpy.props.FloatProperty(default=8.0)
-	bpy.types.WindowManager.curveForce_maxDist = bpy.props.FloatProperty(default=4.0)
-	bpy.types.WindowManager.curveForce_falloffPower = bpy.props.FloatProperty(default=2.0)
-	bpy.types.WindowManager.curveForce_trailout = bpy.props.BoolProperty(default=False)
+	bpy.types.WindowManager.curveForce_strength = bpy.props.FloatProperty(default=8.0,description="The power of each wind force along the curve")
+	bpy.types.WindowManager.curveForce_maxDist = bpy.props.FloatProperty(default=4.0,description="Maximum influence distance for wind forces")
+	bpy.types.WindowManager.curveForce_falloffPower = bpy.props.FloatProperty(default=2.0,description="Distance falloff for winf forces")
+	bpy.types.WindowManager.curveForce_trailout = bpy.props.BoolProperty(default=False,description="Fade the size and influence of the wind forces along the curve")
 	
 	# display
 	bpy.types.WindowManager.vf_showingvelocitylines = bpy.props.IntProperty(default=-1)
@@ -265,6 +267,7 @@ def register():
 	bpy.utils.register_class(vf_editor.select_vfslice)
 	bpy.utils.register_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.register_class(vf_editor.vf_invertvelocities)
+	bpy.utils.register_class(vf_editor.update_vfdispoffsets)
 	
 	bpy.utils.register_class(vf_editor.export_vectorfieldfile)
 	bpy.utils.register_class(vf_editor.import_vectorfieldfile)
@@ -284,6 +287,7 @@ def unregister():
 	bpy.utils.unregister_class(vf_editor.select_vfslice)
 	bpy.utils.unregister_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.unregister_class(vf_editor.vf_invertvelocities)
+	bpy.utils.unregister_class(vf_editor.update_vfdispoffsets)
 	
 	bpy.utils.unregister_class(vf_editor.export_vectorfieldfile)
 	bpy.utils.unregister_class(vf_editor.import_vectorfieldfile)

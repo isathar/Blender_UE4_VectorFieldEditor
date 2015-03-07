@@ -1,20 +1,15 @@
+### Editor Functions
 
 import bpy
-
-import math
-from mathutils import Vector, Matrix
-
-import bmesh
-
 import bgl
-
-from bpy.props import (StringProperty,FloatProperty,BoolProperty)
-
-from bpy_extras.io_utils import (ImportHelper,ExportHelper,path_reference_mode)
-
 import os.path
 
-# saves velocities for export
+from mathutils import Vector, Matrix
+
+from . import vf_vdata
+
+
+# Performs vector math + writes results to data
 class calc_vectorfieldvelocities(bpy.types.Operator):
 	bl_idname = 'object.calc_vectorfieldvelocities'
 	bl_label = 'Save VF EndLocations'
@@ -23,126 +18,95 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 
 	@classmethod
 	def poll(cls, context):
-		return (context.mode == "OBJECT" and context.active_object != None) and 'custom_vectorfield' in context.active_object
+		return (context.mode == "OBJECT" and context.active_object != None) and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
 		invmult = -1.0 if context.window_manager.pvelocity_invert else 1.0
 		
 		useselection = context.window_manager.pvelocity_selection
-		usedistance = context.window_manager.pvelocity_veltype == "DIST"
-		useangularvelocity = context.window_manager.pvelocity_veltype == "ANGVEL"
+		
 		me = context.active_object.data
 		me.update()
 		
 		particleslist = []
-		mvertslist = []
 		
+		## Get velocities
 		if context.window_manager.pvelocity_veltype == "VECT":
 			tempvect = Vector(context.window_manager.pvelocity_dirvector)
 			particleslist = [tempvect for p in context.active_object.particle_systems[0].particles]
-			usedistance = False
+		elif context.window_manager.pvelocity_veltype == "DIST":
+			tplist = context.active_object.particle_systems[0].particles
+			particleslist = [(tplist[i].location - vf_vdata.particle_startlocs[i]) for i in range(len(tplist))]
+		elif context.window_manager.pvelocity_veltype == "ANGVEL":
+			particleslist = [p.angular_velocity for p in context.active_object.particle_systems[0].particles]
+		elif context.window_manager.pvelocity_veltype == "PNT":
+			cursorloc = context.scene.cursor_location
+			particleslist = [(v.co - cursorloc).normalized() for v in me.vertices]
 		else:
-			if usedistance:
-				particleslist = [p.location for p in context.active_object.particle_systems[0].particles]
-			else:
-				if useangularvelocity:
-					particleslist = [p.angular_velocity for p in context.active_object.particle_systems[0].particles]
-				else:
-					particleslist = [p.velocity for p in context.active_object.particle_systems[0].particles]
+			particleslist = [p.velocity for p in context.active_object.particle_systems[0].particles]
 		
+		mvertslist = []
 		if useselection:
 			mvertslist = [v.select for v in me.vertices]
 		
+		
+		## Blend with List / calculate
+		
 		# multiply
 		if context.window_manager.pvelocity_genmode == 'MULT':
-			if usedistance:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							tempvel = particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)
-							context.active_object.custom_vectorfield[i].vvelocity[0] = context.active_object.custom_vectorfield[i].vvelocity[0] * (tempvel[0] * invmult)
-							context.active_object.custom_vectorfield[i].vvelocity[1] = context.active_object.custom_vectorfield[i].vvelocity[1] * (tempvel[1] * invmult)
-							context.active_object.custom_vectorfield[i].vvelocity[2] = context.active_object.custom_vectorfield[i].vvelocity[2] * (tempvel[2] * invmult)
-				else:
-					for i in range(len(particleslist)):
-						tempvel = particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)
-						context.active_object.custom_vectorfield[i].vvelocity[0] = context.active_object.custom_vectorfield[i].vvelocity[0] * (tempvel[0] * invmult)
-						context.active_object.custom_vectorfield[i].vvelocity[1] = context.active_object.custom_vectorfield[i].vvelocity[1] * (tempvel[1] * invmult)
-						context.active_object.custom_vectorfield[i].vvelocity[2] = context.active_object.custom_vectorfield[i].vvelocity[2] * (tempvel[2] * invmult)
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = Vector(
+							(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
+							vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
+							vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+						)
 			else:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity[0] = context.active_object.custom_vectorfield[i].vvelocity[0] * (particleslist[i][0] * invmult)
-							context.active_object.custom_vectorfield[i].vvelocity[1] = context.active_object.custom_vectorfield[i].vvelocity[1] * (particleslist[i][1] * invmult)
-							context.active_object.custom_vectorfield[i].vvelocity[2] = context.active_object.custom_vectorfield[i].vvelocity[2] * (particleslist[i][2] * invmult)
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity[0] = context.active_object.custom_vectorfield[i].vvelocity[0] * (particleslist[i][0] * invmult)
-						context.active_object.custom_vectorfield[i].vvelocity[1] = context.active_object.custom_vectorfield[i].vvelocity[1] * (particleslist[i][1] * invmult)
-						context.active_object.custom_vectorfield[i].vvelocity[2] = context.active_object.custom_vectorfield[i].vvelocity[2] * (particleslist[i][2] * invmult)
-		
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = Vector(
+						(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
+						vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
+						vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+					)
+			
 		# add
 		elif context.window_manager.pvelocity_genmode == 'ADD':
-			if usedistance:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult)
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult)
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
 			else:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i]) * invmult)
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i]) * invmult)
-		
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
+			
 		# average
 		elif context.window_manager.pvelocity_genmode == 'AVG':
-			if usedistance:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult)) * 0.5
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + ((particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult)) * 0.5
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
 			else:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + (particleslist[i] * invmult)) * 0.5
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = (Vector(context.active_object.custom_vectorfield[i].vvelocity) + (particleslist[i] * invmult)) * 0.5
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
 			
 		# replace
 		elif context.window_manager.pvelocity_genmode == 'REP':
-			if usedistance:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = (particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = (particleslist[i] - Vector(context.active_object.custom_vectorfield[i].vstartloc)) * invmult
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
 			else:
-				if useselection:
-					for i in range(len(particleslist)):
-						if mvertslist[i]:
-							context.active_object.custom_vectorfield[i].vvelocity = particleslist[i] * invmult
-				else:
-					for i in range(len(particleslist)):
-						context.active_object.custom_vectorfield[i].vvelocity = particleslist[i] * invmult
-			
-			
-		#angular_velocity
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
+		
+		
+		save_velobjectdata(context.active_object)
+		
 		return {'FINISHED'}
 
+
+# Normalizes the list
 class vf_normalizevelocities(bpy.types.Operator):
 	bl_idname = 'object.vf_normalizevelocities'
 	bl_label = 'Normalize'
@@ -151,51 +115,58 @@ class vf_normalizevelocities(bpy.types.Operator):
 
 	@classmethod
 	def poll(cls, context):
-		return context.active_object != None and 'custom_vectorfield' in context.active_object
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
-		for v in context.active_object.custom_vectorfield:
-			v.vvelocity = Vector(v.vvelocity).normalized()
+		for i in range(len(vf_vdata.particle_velocitieslist)):
+			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i].normalized()
 		
 		return {'FINISHED'}
 
+# Inverts the list
 class vf_invertvelocities(bpy.types.Operator):
 	bl_idname = 'object.vf_invertvelocities'
 	bl_label = 'Invert All'
 	bl_description = 'Inverts the currently saved velocity list'
-
+	bl_options = {'REGISTER', 'UNDO'}
+	
 	@classmethod
 	def poll(cls, context):
-		return context.active_object != None and 'custom_vectorfield' in context.active_object
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
-		for v in context.active_object.custom_vectorfield:
-			v.vvelocity = Vector(v.vvelocity) * -1.0
-		
+		for i in range(len(vf_vdata.particle_velocitieslist)):
+			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] * -1.0
 		return {'FINISHED'}
 
-# creates a wind tunnel from a curve object
+
+# creates a wind tunnel from selected curve object
 class calc_pathalongspline(bpy.types.Operator):
 	bl_idname = 'object.calc_pathalongspline'
 	bl_label = 'Path along spline'
 	bl_description = 'create wind forces along a spline to direct velocities along it'
 	bl_options = {'REGISTER', 'UNDO'}
-
+	
 	@classmethod
 	def poll(cls, context):
 		return (context.mode == "OBJECT" and context.active_object != None) and context.active_object.type == 'CURVE'
 	
 	def execute(self, context):
-		#print (context.active_object.type)
 		curvepoints = []
-		
-		if len(context.active_object.data.splines[0].bezier_points) > 1:
-			curvepoints = [v.co for v in context.active_object.data.splines[0].bezier_points]
-		else:
-			curvepoints = [v.co for v in context.active_object.data.splines[0].points]
-		
 		curveobj = context.active_object
+		
+		bpy.ops.object.empty_add(type='PLAIN_AXES')
+		parentobj = context.active_object
+		parentobj.name = 'CurveForce'
+		
+		if len(curveobj.data.splines[0].bezier_points) > 1:
+			curvepoints = [v.co for v in curveobj.data.splines[0].bezier_points]
+		else:
+			curvepoints = [v.co for v in curveobj.data.splines[0].points]
+		
+		curveobj.parent = parentobj
 		context.active_object.select = False
+		curveobj.select = True
 		
 		previousnormal = Vector([0.0,0.0,0.0])
 		
@@ -203,18 +174,10 @@ class calc_pathalongspline(bpy.types.Operator):
 		lastDistance = context.window_manager.curveForce_maxDist
 		
 		for i in range(len(curvepoints)):
-			cpoint = Vector([0.0,0.0,0.0])
-			cpoint[0] = curvepoints[i][0]
-			cpoint[1] = curvepoints[i][1]
-			cpoint[2] = curvepoints[i][2]
+			cpoint = Vector([curvepoints[i][0],curvepoints[i][1],curvepoints[i][2]])
 			
-			bpy.ops.mesh.primitive_plane_add(location=(cpoint))
-			
-			# make empty
-			bpy.ops.object.mode_set(mode='EDIT')
-			bpy.ops.mesh.delete(type='VERT')
-			bpy.ops.object.mode_set(mode='OBJECT')
-			
+			bpy.ops.object.empty_add(type='SINGLE_ARROW',location=(cpoint))
+			context.active_object.name = 'ForceObj'
 			# turn into forcefield
 			bpy.ops.object.forcefield_toggle()
 			context.active_object.field.type = 'WIND'
@@ -232,10 +195,7 @@ class calc_pathalongspline(bpy.types.Operator):
 			# get the curve's direction between points
 			tempnorm = Vector([0,0,0])
 			if (i < len(curvepoints) - 1):
-				cpoint2 = Vector([0.0,0.0,0.0])
-				cpoint2[0] = curvepoints[i + 1][0]
-				cpoint2[1] = curvepoints[i + 1][1]
-				cpoint2[2] = curvepoints[i + 1][2]
+				cpoint2 = Vector([curvepoints[i + 1][0],curvepoints[i + 1][1],curvepoints[i + 1][2]])
 				tempnorm = cpoint - cpoint2
 				if i > 0:
 					if abs(previousnormal.length) > 0.0:
@@ -243,24 +203,18 @@ class calc_pathalongspline(bpy.types.Operator):
 				previousnormal = tempnorm
 			else:
 				if curveobj.data.splines[0].use_cyclic_u or curveobj.data.splines[0].use_cyclic_u:
-					cpoint2 = Vector([0.0,0.0,0.0])
-					cpoint2[0] = curvepoints[0][0]
-					cpoint2[1] = curvepoints[0][1]
-					cpoint2[2] = curvepoints[0][2]
+					cpoint2 = Vector([curvepoints[0][0],curvepoints[0][1],curvepoints[0][2]])
 					tempnorm = cpoint - cpoint2
 					if abs(previousnormal.length) > 0.0:
 						tempnorm = (tempnorm + previousnormal) / 2.0
 					previousnormal = tempnorm
 				else:
-					cpoint2 = Vector([0.0,0.0,0.0])
-					cpoint2[0] = curvepoints[i - 1][0]
-					cpoint2[1] = curvepoints[i - 1][1]
-					cpoint2[2] = curvepoints[i - 1][2]
+					cpoint2 = Vector([curvepoints[i - 1][0],curvepoints[i - 1][1],curvepoints[i - 1][2]])
 					tempnorm = cpoint2 - cpoint
 					if abs(previousnormal.length) > 0.0:
 						tempnorm = (tempnorm + previousnormal) / 2.0
 					previousnormal = tempnorm
-					
+			
 			if abs(tempnorm.length) > 0.0:
 				z = Vector((0,0,1))
 				angle = tempnorm.angle(z)
@@ -269,25 +223,25 @@ class calc_pathalongspline(bpy.types.Operator):
 				mat_world = context.active_object.matrix_world * mat
 				context.active_object.matrix_world = mat_world
 			
-			objs = context.active_object.constraints.new(type='COPY_LOCATION')
-			objs.use_offset = True
-			objs.target = curveobj
+			context.active_object.parent = parentobj
 		
 		return {'FINISHED'}
-		
-		
-#####################################################
+
+
+### Create
+
+# Creates a new vector field from parameters
 def build_vectorfield(context):
 	densityVal = Vector(context.window_manager.vf_density)
 	scaleVal = Vector(context.window_manager.vf_scale)
 	
-	
 	volcount = 0
-	#baseLoc = ((-1.0 * densityVal) * 0.25) + Vector([0.25,0.25,0.25])
-	baseLoc = Vector([0.0,0.0,0.0])
-	baseLoc[0] = ((-1.0 * (densityVal[0] * 0.25) + 0.25))
-	baseLoc[1] = ((-1.0 * (densityVal[1] * 0.25) + 0.25))
-	baseLoc[2] = ((-1.0 * (densityVal[2] * 0.25) + 0.25))
+	baseLoc = Vector(
+		((-1.0 * (densityVal[0] * 0.5) + 0.5),
+			(-1.0 * (densityVal[1] * 0.5) + 0.5),
+			(-1.0 * (densityVal[2] * 0.5) + 0.5)
+		)
+	)
 	
 	totalvertscount = densityVal[0] * densityVal[1] * densityVal[2]
 	xval = int(densityVal[0])
@@ -297,12 +251,12 @@ def build_vectorfield(context):
 	#import timeit
 	#start = timeit.default_timer()
 	
-	# create the volume
-	bpy.ops.mesh.primitive_plane_add(location=(0.0,0.0,0.0))
-	
 	for v in range(len(context.scene.objects)):
 		if ("VF_Volume" in str(context.scene.objects[v].name)):
 			volcount += 1
+	
+	# create the volume
+	bpy.ops.mesh.primitive_plane_add(location=(0.0,0.0,0.0))
 	
 	context.active_object.name = 'VF_Volume_' + str(volcount)
 	parentObj = context.active_object
@@ -326,9 +280,9 @@ def build_vectorfield(context):
 	
 	context.active_object.vf_object_scale = scaleVal
 	
-	context.active_object.custom_vectorfield.clear()
+	vf_vdata.particle_velocitieslist.clear()
+	vf_vdata.particle_startlocs.clear()
 	
-	print(len(context.active_object.custom_vectorfield))
 	zeroVect = Vector([0.0,0.0,0.0])
 	
 	# create vertices + initialize velocities list
@@ -336,22 +290,21 @@ def build_vectorfield(context):
 	for i in range(zval):
 		for j in range(yval):
 			for k in range(xval):
-				tempV = (baseLoc + Vector([(k * 0.5),(j * 0.5),(i * 0.5)]))
-				tempV[0] = tempV[0] * scaleVal[0]
-				tempV[1] = tempV[1] * scaleVal[1]
-				tempV[2] = tempV[2] * scaleVal[2]
+				tempV = Vector(
+					((baseLoc[0] + (k)) * scaleVal[0],
+						(baseLoc[1] + (j)) * scaleVal[1],
+						(baseLoc[2] + (i)) * scaleVal[2]
+					)
+				)
 				meshverts[counter].co = tempV
-				tempvertdata = context.active_object.custom_vectorfield.add()
-				tempvertdata.vvelocity = zeroVect
-				tempvertdata.vstartloc = tempV
-				tempvertdata.v_index[0] = k
-				tempvertdata.v_index[1] = j
-				tempvertdata.v_index[2] = i
+				vf_vdata.particle_velocitieslist.append(zeroVect)
+				vf_vdata.particle_startlocs.append(tempV)
+				
 				counter += 1
 	
 	me.update()
 	
-	meshverts = []
+	del meshverts[:]
 	
 	# create the particle system
 	psettings.count = totalvertscount
@@ -372,27 +325,32 @@ def build_vectorfield(context):
 	bpy.ops.mesh.primitive_cube_add(location=(0.0,0.0,0.0))
 	context.active_object.name = 'VF_Bounds_' + str(volcount)
 	
-	context.active_object.scale[0] = (densityVal[0] * 0.25) * scaleVal[0]
-	context.active_object.scale[1] = (densityVal[1] * 0.25) * scaleVal[1]
-	context.active_object.scale[2] = (densityVal[2] * 0.25) * scaleVal[2]
-	
+	# match scale to the volume
+	context.active_object.scale[0] = (densityVal[0] * 0.5) * scaleVal[0]
+	context.active_object.scale[1] = (densityVal[1] * 0.5) * scaleVal[1]
+	context.active_object.scale[2] = (densityVal[2] * 0.5) * scaleVal[2]
 	bpy.ops.object.transform_apply(scale=True)
 	
+	# - rewrite at some point so modes aren't messed with:
 	bpy.ops.object.mode_set(mode='EDIT')
 	bpy.ops.mesh.delete(type='ONLY_FACE')
 	bpy.ops.object.mode_set(mode='OBJECT')
 	
 	volMesh.parent = context.active_object
 	
+	save_velobjectdata(volMesh)
+	
 	#stop = timeit.default_timer()
 	#print (stop - start)
 	
 	return volMesh.name
 
+
 class create_vectorfield(bpy.types.Operator):
 	bl_idname = 'object.create_vectorfield'
 	bl_label = 'Create VectorField'
 	bl_description = 'Create a new vector field from resolution and scale values'
+	bl_options = {'REGISTER', 'UNDO'}
 
 	@classmethod
 	def poll(cls, context):
@@ -400,64 +358,12 @@ class create_vectorfield(bpy.types.Operator):
 	
 	def execute(self, context):
 		build_vectorfield(context)
-		
 		return {'FINISHED'}
 
 
-######Selection######
 
-# select a slice of the volume on specified axes
-class select_vfslice(bpy.types.Operator):
-	bl_idname = "object.select_vfslice"
-	bl_label = 'Select Slice'
-	bl_description = 'Select a section of the vector field by axis'
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	@classmethod
-	def poll(cls, context):
-		return context.active_object != None and "VF_Volume" in context.active_object.name
-	
-	def execute(self, context):
-		me = context.active_object.data
-		bm = ''
-		meshverts = []
-		
-		if context.mode == "EDIT_MESH":
-			bm = bmesh.from_edit_mesh(me)
-			me.update()
-			meshverts = [v for v in bm.verts]
-		elif context.mode == "OBJECT":
-			me.update()
-			meshverts = [v for v in me.vertices]
-		
-		selectedlist = [i for i in range(len(meshverts)) if meshverts[i].select]
-		indiceslist = [v.v_index for v in context.active_object.custom_vectorfield]
-		
-		# sanity check for large volumes
-		selectedmax = 8
-		
-		for j in range(len(selectedlist)):
-			indexvect = context.active_object.custom_vectorfield[selectedlist[j]].v_index
-			for i in range(len(meshverts)):
-				v = meshverts[i]
-				if not v.select:
-					curindexvect = indiceslist[i]
-					if 'X' in context.window_manager.pselect_slice:
-						if curindexvect[0] == indexvect[0]:
-							v.select = True
-					if 'Y' in context.window_manager.pselect_slice:
-						if curindexvect[1] == indexvect[1]:
-							v.select = True
-					if 'Z' in context.window_manager.pselect_slice:
-						if curindexvect[2] == indexvect[2]:
-							v.select = True
-			if j >= selectedmax:
-				break
-		
-		return {'FINISHED'}
+### Display
 
-
-######Display########
 class toggle_vectorfieldinfo(bpy.types.Operator):
 	bl_idname = "object.toggle_vectorfieldinfo"
 	bl_label = 'Show Current VF Info'
@@ -465,7 +371,7 @@ class toggle_vectorfieldinfo(bpy.types.Operator):
 	
 	@classmethod
 	def poll(cls, context):
-		return context.active_object != None and 'custom_vectorfield' in context.active_object
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
 		return {'FINISHED'}
@@ -480,7 +386,7 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 	
 	@classmethod
 	def poll(cls, context):
-		return context.mode == "OBJECT" and context.active_object != None and 'custom_vectorfield' in context.active_object
+		return context.mode == "OBJECT" and context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def modal(self, context, event):
 		if context.area:
@@ -519,12 +425,12 @@ def draw_line(vertexloc, vertexnorm):
 
 # iterate through list to draw each line
 def draw_vectorfield(self, context):
-	if 'custom_vectorfield' not in context.active_object:
-		return
-	
 	bgl.glEnable(bgl.GL_BLEND)
 	bgl.glColor3f(0.0,1.0,0.0)
-	[draw_line(v.vstartloc, v.vvelocity) for v in context.active_object.custom_vectorfield]
+	
+	for i in range(len(vf_vdata.particle_velocitieslist)):
+		draw_line(vf_vdata.particle_startlocs[i],vf_vdata.particle_velocitieslist[i])
+	
 	bgl.glDisable(bgl.GL_BLEND)
 
 
@@ -535,7 +441,7 @@ class update_vfdispoffsets(bpy.types.Operator):
 	
 	@classmethod
 	def poll(cls, context):
-		return context.mode == "OBJECT" and context.active_object != None and 'custom_vectorfield' in context.active_object
+		return context.mode == "OBJECT" and context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
 		me = context.active_object.data
@@ -545,36 +451,69 @@ class update_vfdispoffsets(bpy.types.Operator):
 		volmesh = context.active_object.parent
 		
 		for i in range(len(meshverts)):
-			context.active_object.custom_vectorfield[i].vstartloc = meshverts[i] + volmesh.location
+			vf_vdata.particle_startlocs[i] = meshverts[i] + volmesh.location
 		
 		return {'FINISHED'}
 
-#############################
 
-# Import/Export functions:
+class update_vfeditorvars(bpy.types.Operator):
+	bl_idname = "view3d.update_vfeditorvars"
+	bl_label = 'Update Editor Data'
+	bl_description = 'Updates data used by editor. (use if current data is not synced with selected volume)'
+	
+	@classmethod
+	def poll(cls, context):
+		return context.mode == "OBJECT" and context.active_object != None and 'VF_Volume_' in context.active_object.name
+	
+	def execute(self, context):
+		me = context.active_object.data
+		me.update()
+		meshverts = [v.co for v in me.vertices]
+		
+		volmesh = context.active_object.parent
+		
+		vf_vdata.particle_velocitieslist.clear()
+		vf_vdata.particle_startlocs.clear()
+		
+		for i in range(len(context.active_object.custom_vectorfield)):
+			vf_vdata.particle_velocitieslist.append(context.active_object.custom_vectorfield[i].vvelocity)
+			vf_vdata.particle_startlocs.append(meshverts[i] + volmesh.location)
+		
+		return {'FINISHED'}
 
+def save_velobjectdata(volmesh):
+	if 'custom_vectorfield' not in volmesh:
+		volmesh['custom_vectorfield'] = []
+	
+	volmesh.custom_vectorfield.clear()
+	for v in vf_vdata.particle_velocitieslist:
+		tempvertdata = volmesh.custom_vectorfield.add()
+		tempvertdata.vvelocity = v
+
+
+### Import
+
+# create new vector field from imported data
 def build_importedVectorField(tempvelList, tempOffset):
 	# create blank vf
 	volname = build_vectorfield(bpy.context)
 	volmesh = bpy.context.scene.objects[volname]
 	# copy imported velocities
-	for l in range(len(tempvelList)):
-		tempvertdata = volmesh.custom_vectorfield[l]
-		tempvertdata.vvelocity = tempvelList[l]
+	for i in range(len(tempvelList)):
+		volmesh.custom_vectorfield[i].vvelocity = tempvelList[i]
+		vf_vdata.particle_velocitieslist[i] = tempvelList[i]
+		vf_vdata.particle_startlocs[i] = vf_vdata.particle_startlocs[i] + tempOffset
 	
 	volmesh.parent.location = volmesh.parent.location + tempOffset
-	
-	for v in volmesh.custom_vectorfield:
-		v.vstartloc = Vector(v.vstartloc) + tempOffset
 
+# read data from file
 def parse_fgafile(self, context):
 	returnmessage = ""
 	fgafilepath = self.filepath
 	if os.path.exists(fgafilepath):
 		if os.path.isfile(fgafilepath):
 			file = open(fgafilepath, 'r')
-			
-			importvf_scalemult = context.window_manager.importvf_scalemult
+			importvf_scalemult = self.importvf_scalemult
 			linecount = 0
 			tempvelList = []
 			tempMin = Vector([0.0,0.0,0.0])
@@ -591,29 +530,31 @@ def parse_fgafile(self, context):
 				
 				if linecount <= 2:
 					if linecount == 0:
+						# Resolution
 						context.window_manager.vf_density[0] = int(flist[0])
 						context.window_manager.vf_density[1] = int(flist[1])
 						context.window_manager.vf_density[2] = int(flist[2])
 					elif linecount == 1:
+						# Min bounds
 						tempMin[0] = flist[0]
 						tempMin[1] = flist[1]
 						tempMin[2] = flist[2]
 					elif linecount == 2:
+						# Max bounds, calc offset + scale
 						tempscalemult = Vector([0.0,0.0,0.0])
 						tempscalemult[0] = abs(flist[0] - tempMin[0])
 						tempscalemult[1] = abs(flist[1] - tempMin[1])
 						tempscalemult[2] = abs(flist[2] - tempMin[2])
-						print("scaleMult: " + str(tempscalemult))
 						context.window_manager.vf_scale[0] = (tempscalemult[0] / context.window_manager.vf_density[0]) * importvf_scalemult
 						context.window_manager.vf_scale[1] = (tempscalemult[1] / context.window_manager.vf_density[1]) * importvf_scalemult
 						context.window_manager.vf_scale[2] = (tempscalemult[2] / context.window_manager.vf_density[2]) * importvf_scalemult
-						if context.window_manager.importvf_getoffset:
-							tempOffset[0] = (((tempMin[0] + (tempscalemult[0] * 0.5)) * importvf_scalemult) * 0.5)
-							tempOffset[1] = (((tempMin[1] + (tempscalemult[1] * 0.5)) * importvf_scalemult) * 0.5)
-							tempOffset[2] = (((tempMin[2] + (tempscalemult[2] * 0.5)) * importvf_scalemult) * 0.5)
-							print("offset:  " + str(tempOffset))
+						if self.importvf_getoffset:
+							tempOffset[0] = (((tempMin[0] + (tempscalemult[0] * 0.5)) * importvf_scalemult))
+							tempOffset[1] = (((tempMin[1] + (tempscalemult[1] * 0.5)) * importvf_scalemult))
+							tempOffset[2] = (((tempMin[2] + (tempscalemult[2] * 0.5)) * importvf_scalemult))
 				else:
-					if context.window_manager.importvf_velscale:
+					# Velocities
+					if self.importvf_velscale:
 						tempvelList.append(Vector([flist[0] * importvf_scalemult,flist[1] * importvf_scalemult,flist[2] * importvf_scalemult]))
 					else:
 						tempvelList.append(Vector(flist))
@@ -634,40 +575,12 @@ def parse_fgafile(self, context):
 	return returnmessage
 
 
-#Import
 
-class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
-	bl_idname = "object.import_vectorfieldfile"
-	bl_label = "Import FGA"
-	bl_description = 'Import FGA file as a vector field'
-
-	filename_ext = ".fga"
-	filter_glob = StringProperty(default="*.fga", options={'HIDDEN'})
-	
-	def draw(self,context):
-		layout = self.layout
-		
-		box = layout.box()
-		row = box.row()
-		row.prop(context.window_manager, 'importvf_scalemult', text='Import Scale')
-		row = box.row()
-		row.prop(context.window_manager, 'importvf_velscale', text='Scale Velocity')
-		row = box.row()
-		row.prop(context.window_manager, 'importvf_getoffset', text='Import Offset')
-	
-	
-	def execute(self, context):
-		retmessage = parse_fgafile(self, context)
-		print ("FGA Import: " + retmessage + " (" + self.filepath + ")")
-		
-		return {'FINISHED'}
-
-
-# Export:
+### Export
 
 def write_fgafile(self, context):
-	usevelscale = context.window_manager.exportvf_velscale
-	useoffset = context.window_manager.exportvf_locoffset
+	usevelscale = self.exportvf_velscale
+	useoffset = self.exportvf_locoffset
 	
 	tempDensity = Vector(context.active_object.vf_object_density)
 	fgascale = Vector(context.active_object.vf_object_scale)
@@ -678,67 +591,71 @@ def write_fgafile(self, context):
 	# Resolution:
 	fw("%f,%f,%f," % (tempDensity[0],tempDensity[1],tempDensity[2]))
 	
-	# Minimum/Maximum XYZ:
-	if context.window_manager.exportvf_allowmanualbounds:
-		fw("\n%f,%f,%f," % (context.window_manager.exportvf_manualboundsneg[0],context.window_manager.exportvf_manualboundsneg[1],context.window_manager.exportvf_manualboundsneg[2]))
-		fw("\n%f,%f,%f," % (context.window_manager.exportvf_manualboundspos[0],context.window_manager.exportvf_manualboundspos[1],context.window_manager.exportvf_manualboundspos[2]))
+	# Minimum/Maximum Bounds:
+	if self.exportvf_allowmanualbounds:
+		fw("\n%f,%f,%f," % (
+			self.exportvf_manualboundsneg[0],
+			self.exportvf_manualboundsneg[1],
+			self.exportvf_manualboundsneg[2])
+		)
+		fw("\n%f,%f,%f," % (
+			self.exportvf_manualboundspos[0],
+			self.exportvf_manualboundspos[1],
+			self.exportvf_manualboundspos[2])
+		)
 	else:
 		if useoffset:
-			offsetvect = context.active_object.parent.location * 2.0
-			fw("\n%f,%f,%f," % ((((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * context.window_manager.exportvf_scale,(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * context.window_manager.exportvf_scale,(((tempDensity[2] * -0.5) * fgascale[2]) + (offsetvect[2])) * context.window_manager.exportvf_scale))
-			fw("\n%f,%f,%f," % ((((tempDensity[0] * 0.5) * fgascale[0]) + (offsetvect[0])) * context.window_manager.exportvf_scale,(((tempDensity[1] * 0.5) * fgascale[1]) + (offsetvect[1])) * context.window_manager.exportvf_scale,(((tempDensity[2] * 0.5) * fgascale[2]) + (offsetvect[2])) * context.window_manager.exportvf_scale))
+			offsetvect = context.active_object.parent.location
+			fw("\n%f,%f,%f," % (
+				(((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
+				(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,
+				(((tempDensity[2] * -0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale)
+			)
+			fw("\n%f,%f,%f," % (
+				(((tempDensity[0] * 0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
+				(((tempDensity[1] * 0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,
+				(((tempDensity[2] * 0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale)
+			)
 		else: # centered
-			fw("\n%f,%f,%f," % (((tempDensity[0] * -0.5) * fgascale[0]) * context.window_manager.exportvf_scale,((tempDensity[1] * -0.5) * fgascale[1]) * context.window_manager.exportvf_scale,((tempDensity[2] * -0.5) * fgascale[2]) * context.window_manager.exportvf_scale))
-			fw("\n%f,%f,%f," % (((tempDensity[0] * 0.5) * fgascale[0]) * context.window_manager.exportvf_scale,((tempDensity[1] * 0.5) * fgascale[1]) * context.window_manager.exportvf_scale,((tempDensity[2] * 0.5) * fgascale[2]) * context.window_manager.exportvf_scale))
+			fw("\n%f,%f,%f," % (
+				((tempDensity[0] * -0.5) * fgascale[0]) * self.exportvf_scale,
+				((tempDensity[1] * -0.5) * fgascale[1]) * self.exportvf_scale,
+				((tempDensity[2] * -0.5) * fgascale[2]) * self.exportvf_scale)
+			)
+			fw("\n%f,%f,%f," % (
+				((tempDensity[0] * 0.5) * fgascale[0]) * self.exportvf_scale,
+				((tempDensity[1] * 0.5) * fgascale[1]) * self.exportvf_scale,
+				((tempDensity[2] * 0.5) * fgascale[2]) * self.exportvf_scale)
+			)
 	
 	# Velocities
-	if usevelscale and not context.window_manager.exportvf_allowmanualbounds:
+	if usevelscale and not self.exportvf_allowmanualbounds:
 		for vec in context.active_object.custom_vectorfield:
-			fw("\n%f,%f,%f," % (vec.vvelocity[0] * context.window_manager.exportvf_scale,vec.vvelocity[1] * context.window_manager.exportvf_scale,vec.vvelocity[2] * context.window_manager.exportvf_scale))
+			fw("\n%f,%f,%f," % (
+				vec.vvelocity[0] * self.exportvf_scale,
+				vec.vvelocity[1] * self.exportvf_scale,
+				vec.vvelocity[2] * self.exportvf_scale)
+			)
 	else:
-		if context.window_manager.exportvf_allowmanualbounds:
+		if self.exportvf_allowmanualbounds:
 			for vec in context.active_object.custom_vectorfield:
-				fw("\n%f,%f,%f," % (vec.vvelocity[0] * context.window_manager.exportvf_manualvelocityscale,vec.vvelocity[1] * context.window_manager.exportvf_manualvelocityscale,vec.vvelocity[2] * context.window_manager.exportvf_manualvelocityscale))
+				fw("\n%f,%f,%f," % (
+					vec.vvelocity[0] * self.exportvf_manualvelocityscale,
+					vec.vvelocity[1] * self.exportvf_manualvelocityscale,
+					vec.vvelocity[2] * self.exportvf_manualvelocityscale)
+				)
 		else:
 			for vec in context.active_object.custom_vectorfield:
-				fw("\n%f,%f,%f," % (vec.vvelocity[0],vec.vvelocity[1],vec.vvelocity[2]))
+				fw("\n%f,%f,%f," % (
+					vec.vvelocity[0],
+					vec.vvelocity[1],
+					vec.vvelocity[2])
+				)
 	
 	file.close()
-	
 
-class export_vectorfieldfile(bpy.types.Operator, ExportHelper):
-	bl_idname = "object.export_vectorfieldfile"
-	bl_label = "Export FGA"
-	bl_description = 'Export selected volume as a FGA file'
 
-	filename_ext = ".fga"
-	filter_glob = StringProperty(default="*.fga", options={'HIDDEN'})
-	
-	def check_extension(self):
-		return self.batch_mode == 'OFF'
+### Cleanup
 
-	def check(self, context):
-		is_def_change = super().check(context)
-		return (is_def_change)
-	
-	def draw(self,context):
-		layout = self.layout
-		
-		box = layout.box()
-		box.row().prop(context.window_manager, 'exportvf_allowmanualbounds', text='Manual Bounds')
-		if context.window_manager.exportvf_allowmanualbounds:
-			box.row().column().prop(context.window_manager, 'exportvf_manualboundsneg', text='Minimum Bounds')
-			box.row().column().prop(context.window_manager, 'exportvf_manualboundspos', text='Maximum Bounds')
-			box.row().prop(context.window_manager, 'exportvf_manualvelocityscale', text='Velocity Scale:')
-		else:
-			box.row().prop(context.window_manager, 'exportvf_scale', text='Export Scale:')
-			box.row().prop(context.window_manager, 'exportvf_velscale', text='Scale Velocity')
-			box.row().prop(context.window_manager, 'exportvf_locoffset', text='Export Offset')
-	
-	def execute(self, context):
-		if not self.filepath:
-			raise Exception("filepath not set")
-		else:
-			write_fgafile(self, context)
-		
-		return {'FINISHED'}
+def clear_data():
+	vf_vdata.clearvars()

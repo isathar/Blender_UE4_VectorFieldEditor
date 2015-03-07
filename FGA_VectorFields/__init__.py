@@ -303,9 +303,6 @@ def initdefaults():
 	# display
 	bpy.types.WindowManager.vf_showingvelocitylines = bpy.props.IntProperty(default=-1)
 	
-	# 
-	bpy.types.WindowManager.vf_curselection = bpy.props.StringProperty(default="")
-	
 	# toggle vars for panel
 	bpy.types.WindowManager.show_createpanel = bpy.props.BoolProperty(
 		default=False,description="Toggle Section"
@@ -328,7 +325,7 @@ def clearvars():
 		'vf_density','vf_scale','vf_disablegravity','pvelocity_veltype','pvelocity_genmode',
 		'pvelocity_invert','pvelocity_selection','pvelocity_avgratio','pvelocity_dirvector',
 		'curveForce_strength','curveForce_maxDist','curveForce_falloffPower','curveForce_trailout','curveForce_dispSize'
-		'vf_showingvelocitylines','vf_curselection',
+		'vf_showingvelocitylines',
 		'show_createpanel','show_editpanel','show_displaypanel','show_toolspanel'
 	]
 	

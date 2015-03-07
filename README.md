@@ -9,18 +9,18 @@ Changes made are accumulative, so multiple sets of force fields can be used in d
 
 *This readme is a work in progress (as is the tool)*
 
--------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------- 
 
-## **Features:**
+## **Features:** 
 
-	- **Editor:**
-	  - Saves current particle system velocities and blends them with saved results using one of the following methods:
-	    - *Replace, Average, Add, Multiply*
-	  - Particle velocities used in these calculations can be obtained using the following methods:
-	    - *Velocity, Offset Distance, Angular Velocity, Custom Vector*
-	  - *WIP:* Curve Force tool uses wind forces to move particles along a line.
-	
-	- **Importer + Exporter** for FGA files for use in Unreal Engine 4
+- **Editor:**
+  - Saves current particle system velocities and blends them with saved results using one of the following methods:
+	- *Replace, Average, Add, Multiply*
+  - Particle velocities used in these calculations can be obtained using the following methods:
+	- *Velocity, Offset Distance, Angular Velocity, Custom Vector, Point*
+  - *WIP:* Curve Force tool uses wind forces to move particles along a line.
+
+- **Importer + Exporter** for FGA files for use in Unreal Engine 4
 
 -------------------------------------------------------------------------------------------------------
 
@@ -35,52 +35,44 @@ Changes made are accumulative, so multiple sets of force fields can be used in d
 ## **Notes:**
 
 - *Performance*
-  - Blender may stop responding during the Create, Calculate, and Slice Select operations, but shouldn't crash.
+  - Blender may stop responding during the Create and Calculate operations, but shouldn't crash.
   - On vector fields with a density of less than 128^3, operations should take less than a minute, with lower density fields (<64^3) taking up to a few seconds.
   - At maximum density (128^3), creating a new vector field takes about 20 seconds on my mid-range Core i5 based PC, and calculating velocities can take up to 5 minutes.
   - Performance while editing reasonably sized (< 1 million vertices) vector fields is good, while a 128^3 volume can be painfully slow under the right circumstances.
-  - Enabling the display of velocity lines on large fields will slow things down.
-
+  - Display of velocity lines on large fields (64^3+) is very slow. 
+ 
 - *128x128x128 and System Memory*
-  - Editing a 128x128x128 vector field probably requires a 64-bit system and Blender install, as well as a large amount (> 8GB) of system memory.
+  - Editing a 128x128x128 vector field requires a 64-bit system and Blender install, as well as a large amount (> 6-8 GB) of system memory.
     - This is due to the amount of particles that need to have their dynamics cached
     - To avoid running out of memory while editing very dense vector fields, you may want to lower your undo history steps.
-    - Using a disk cache for your particles may help, too.
-
-- *Curve Force Tool*
-  - This tool will create an empty object for each point on the selected curve in the root scene, which can quickly clutter the scene outliner.
-  - I had some issues with offsets when parenting the force objects to the curve, and am still working on this.
-
-- *Slice Selection Limit*
-  - I've limited the amount of selected vertices that are used to determine which slices to select to 8 because any more than that was incredibly slow on >64^3 vector fields.
-
+    - Using a disk cache for your particles may help, too. 
+ 
 - *Console Warning Messages*
   - While creating a new vector field, the following messages will appear in your console window (if open):
     - `CustomData_copy_data_layer: warning null data for CDOrco type (...)`
     - `CustomData_copy_data_layer: warning null data for CDMVert type (...)`
-  - It looks like these appear because there is no face data in the vector field and can probably be ignored.
+  - It looks like these appear because there is no face data in the vector field and can probably be ignored. 
+ 
+-*The usual disclaimers apply, i.e. don't blame me if anything breaks :D (it shouldn't... I'm just covering myself)*
+
+------------------------------------------------------------------------------------------------------- 
+
+## **Usage Instructions:** *(Some of this is old information, update in progress)* 
 
 
-*The usual disclaimers apply, i.e. don't blame me if anything breaks :D (it shouldn't... I'm just covering myself)*
-
--------------------------------------------------------------------------------------------------------
-
-## **Usage Instructions:** *(Some of this is old information, update in progress)*
-
-
-### **Creating a New Vector Field:**
-
+### **Creating a New Vector Field:** 
+ 
 - Set the resolution (X,Y,Z)
   - The maximum resolution you can set is 128x128x128 since it's the limit set in UE4's importer (not to mention the massive amount of memory you would need for more).
 - Set the scale for the volume's bounds
 - Checking *No Gravity* will disable gravity's influence on the generated particle system (Gravity field weight set to 0)
 - Click *Generate*
-- The number of vectors in the vector field to be created is shown below this button
+- The number of vectors in the vector field to be created is shown below this button 
+ 
+ 
+### **Editing Process:** 
 
-
-### **Editing Process:**
-
-The editor lets you store the velocities of the volume's particles and edit the stored results by blending them using different mathematical expressions and ways to get the velocities.
+The editor lets you store the velocities of the volume's particles and edit the stored results by blending them using different mathematical expressions and ways to get the velocities. 
 
 This way you can change the velocities in steps, allowing you to, for example, add a tunnel of faster upwards velocities to the saved results of a light noisy water volume.
 
@@ -114,7 +106,7 @@ To help with organization when you're blending multiple force influences and set
     - Good as a starting point and for blending with other types
     - Useful with the Multiply blend method as a 3d scale for each velocity
   - *Point:*
-    - velocities = direction pointing away from the 3d cursor
+    - Sets current velocities to a direction pointing away from the 3d cursor
 - ***Blend Method:***
   - The method used to blend saved results with current particle velocities
   - *Replace:*
@@ -249,6 +241,7 @@ Method 2: Manual Bounds (advanced)
     - distances were at half scale before
     - density variable used for creation is now distance between particles
   - added undo functionality to 'generate' function
+  - new velocity mode: Point
 - *Curve Force Tool:*
   - changed curve force tool to create an object group to remove scene outliner clutter
   - fixed curve force fields' parenting issue

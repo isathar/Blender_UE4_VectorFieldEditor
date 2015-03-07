@@ -593,28 +593,64 @@ def write_fgafile(self, context):
 	
 	# Minimum/Maximum Bounds:
 	if self.exportvf_allowmanualbounds:
-		fw("\n%f,%f,%f," % (self.exportvf_manualboundsneg[0],self.exportvf_manualboundsneg[1],self.exportvf_manualboundsneg[2]))
-		fw("\n%f,%f,%f," % (self.exportvf_manualboundspos[0],self.exportvf_manualboundspos[1],self.exportvf_manualboundspos[2]))
+		fw("\n%f,%f,%f," % (
+			self.exportvf_manualboundsneg[0],
+			self.exportvf_manualboundsneg[1],
+			self.exportvf_manualboundsneg[2])
+		)
+		fw("\n%f,%f,%f," % (
+			self.exportvf_manualboundspos[0],
+			self.exportvf_manualboundspos[1],
+			self.exportvf_manualboundspos[2])
+		)
 	else:
 		if useoffset:
 			offsetvect = context.active_object.parent.location
-			fw("\n%f,%f,%f," % ((((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,(((tempDensity[2] * -0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale))
-			fw("\n%f,%f,%f," % ((((tempDensity[0] * 0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,(((tempDensity[1] * 0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,(((tempDensity[2] * 0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale))
+			fw("\n%f,%f,%f," % (
+				(((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
+				(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,
+				(((tempDensity[2] * -0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale)
+			)
+			fw("\n%f,%f,%f," % (
+				(((tempDensity[0] * 0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
+				(((tempDensity[1] * 0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,
+				(((tempDensity[2] * 0.5) * fgascale[2]) + (offsetvect[2])) * self.exportvf_scale)
+			)
 		else: # centered
-			fw("\n%f,%f,%f," % (((tempDensity[0] * -0.5) * fgascale[0]) * self.exportvf_scale,((tempDensity[1] * -0.5) * fgascale[1]) * self.exportvf_scale,((tempDensity[2] * -0.5) * fgascale[2]) * self.exportvf_scale))
-			fw("\n%f,%f,%f," % (((tempDensity[0] * 0.5) * fgascale[0]) * self.exportvf_scale,((tempDensity[1] * 0.5) * fgascale[1]) * self.exportvf_scale,((tempDensity[2] * 0.5) * fgascale[2]) * self.exportvf_scale))
+			fw("\n%f,%f,%f," % (
+				((tempDensity[0] * -0.5) * fgascale[0]) * self.exportvf_scale,
+				((tempDensity[1] * -0.5) * fgascale[1]) * self.exportvf_scale,
+				((tempDensity[2] * -0.5) * fgascale[2]) * self.exportvf_scale)
+			)
+			fw("\n%f,%f,%f," % (
+				((tempDensity[0] * 0.5) * fgascale[0]) * self.exportvf_scale,
+				((tempDensity[1] * 0.5) * fgascale[1]) * self.exportvf_scale,
+				((tempDensity[2] * 0.5) * fgascale[2]) * self.exportvf_scale)
+			)
 	
 	# Velocities
 	if usevelscale and not self.exportvf_allowmanualbounds:
 		for vec in context.active_object.custom_vectorfield:
-			fw("\n%f,%f,%f," % (vec.vvelocity[0] * self.exportvf_scale,vec.vvelocity[1] * self.exportvf_scale,vec.vvelocity[2] * self.exportvf_scale))
+			fw("\n%f,%f,%f," % (
+				vec.vvelocity[0] * self.exportvf_scale,
+				vec.vvelocity[1] * self.exportvf_scale,
+				vec.vvelocity[2] * self.exportvf_scale)
+			)
 	else:
 		if self.exportvf_allowmanualbounds:
 			for vec in context.active_object.custom_vectorfield:
-				fw("\n%f,%f,%f," % (vec.vvelocity[0] * self.exportvf_manualvelocityscale,vec.vvelocity[1] * self.exportvf_manualvelocityscale,vec.vvelocity[2] * self.exportvf_manualvelocityscale))
+				fw("\n%f,%f,%f," % (
+					vec.vvelocity[0] * self.exportvf_manualvelocityscale,
+					vec.vvelocity[1] * self.exportvf_manualvelocityscale,
+					vec.vvelocity[2] * self.exportvf_manualvelocityscale)
+				)
 		else:
 			for vec in context.active_object.custom_vectorfield:
-				fw("\n%f,%f,%f," % (vec.vvelocity[0],vec.vvelocity[1],vec.vvelocity[2]))
+				fw("\n%f,%f,%f," % (
+					vec.vvelocity[0],
+					vec.vvelocity[1],
+					vec.vvelocity[2])
+				)
 	
 	file.close()
 

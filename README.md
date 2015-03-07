@@ -37,7 +37,7 @@ Changes made are accumulative, so multiple sets of force fields can be used in d
 - *Performance*
   - Blender may stop responding during the Create and Calculate operations, but shouldn't crash.
   - On vector fields with a density of less than 128^3, operations should take less than a minute, with lower density fields (<64^3) taking up to a few seconds.
-  - At maximum density (128^3), creating a new vector field takes about 20 seconds on my mid-range Core i5 based PC, and calculating velocities can take up to 5 minutes.
+  - At maximum density (128^3), creating a new vector field takes about 20 seconds on my mid-range Core i5 based PC, and calculating velocities can take up to 2 minutes (after recent tweaks).
   - Performance while editing reasonably sized (< 1 million vertices) vector fields is good, while a 128^3 volume can be painfully slow under the right circumstances.
   - Display of velocity lines on large fields (64^3+) is very slow. 
  

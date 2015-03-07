@@ -451,7 +451,7 @@ class update_vfdispoffsets(bpy.types.Operator):
 		volmesh = context.active_object.parent
 		
 		for i in range(len(meshverts)):
-			vf_vdata.particle_startlocs[i] = meshverts[i] + volmesh.location
+			vf_vdata.particle_startlocs[i] = Vector(meshverts[i] + volmesh.location)
 		
 		return {'FINISHED'}
 
@@ -476,8 +476,8 @@ class update_vfeditorvars(bpy.types.Operator):
 		vf_vdata.particle_startlocs.clear()
 		
 		for i in range(len(context.active_object.custom_vectorfield)):
-			vf_vdata.particle_velocitieslist.append(context.active_object.custom_vectorfield[i].vvelocity)
-			vf_vdata.particle_startlocs.append(meshverts[i] + volmesh.location)
+			vf_vdata.particle_velocitieslist.append(Vector(context.active_object.custom_vectorfield[i].vvelocity))
+			vf_vdata.particle_startlocs.append(Vector(meshverts[i] + volmesh.location))
 		
 		return {'FINISHED'}
 

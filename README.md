@@ -7,7 +7,9 @@ Velocities are edited by adding forces to the scene that can affect the particle
 Changes made are accumulative, so multiple sets of force fields can be used in different passes and combined into the final result using selectable math operations. 
 (For example, you could generate velocities using a vortex force in the center of the volume, then blend in an upwards velocity to tilt the resulting velocities up)
  
-*This readme is a work in progress (as is the tool)* 
+
+New Documentation is available here: https://github.com/isathar/Blender_UE4_VectorFieldEditor/wiki (or the wiki link on the side) 
+- Still wip, but almost finished. 
  
 ------------------------------------------------------------------------------------------------------- 
 

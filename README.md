@@ -1,14 +1,14 @@
 Blender - UE4 - FGA Vector Field Editor
 =======================================
 
-Allows creation and manipulation of vector fields using Blender particle simulations, as well as import/export of the FGA file format used in Unreal Engine 4.
-
-Velocities are edited by adding forces to the scene that can affect the particles in the volume. 
-Changes made are accumulative, so multiple sets of force fields can be used in different passes and combined into the final result using selectable math operations.
+Allows creation and manipulation of vector fields using Blender particle simulations, as well as import/export of the FGA file format used in Unreal Engine 4. 
+ 
+Velocities are edited by adding forces to the scene that can affect the particles in the volume.
+Changes made are accumulative, so multiple sets of force fields can be used in different passes and combined into the final result using selectable math operations. 
 (For example, you could generate velocities using a vortex force in the center of the volume, then blend in an upwards velocity to tilt the resulting velocities up)
-
-*This readme is a work in progress (as is the tool)*
-
+ 
+*This readme is a work in progress (as is the tool)* 
+ 
 ------------------------------------------------------------------------------------------------------- 
 
 ## **Features:** 
@@ -18,22 +18,22 @@ Changes made are accumulative, so multiple sets of force fields can be used in d
 	- *Replace, Average, Add, Multiply*
   - Particle velocities used in these calculations can be obtained using the following methods:
 	- *Velocity, Offset Distance, Angular Velocity, Custom Vector, Point*
-  - *WIP:* Curve Force tool uses wind forces to move particles along a line.
-
-- **Importer + Exporter** for FGA files for use in Unreal Engine 4
-
--------------------------------------------------------------------------------------------------------
-
-## **Installation:**
-
+  - *WIP:* Curve Force tool uses wind forces to move particles along a line. 
+  
+- **Importer + Exporter** for FGA files for use in Unreal Engine 4 
+ 
+------------------------------------------------------------------------------------------------------- 
+ 
+## **Installation:** 
+ 
 - Extract to your Blender\#.##\scripts\addons folder
 - Enable in the addon manager (named "FGA Vector Field Tools")
-- A new section called Vector Fields should be available in the tools panel
-
----------------------------------------------------------------------------------------------------------
-
-## **Notes:**
-
+- A new section called Vector Fields should be available in the tools panel 
+ 
+--------------------------------------------------------------------------------------------------------- 
+ 
+## **Notes:** 
+ 
 - *Performance*
   - Blender may stop responding during the Create and Calculate operations, but shouldn't crash.
   - On vector fields with a density of less than 128^3, operations should take less than a minute, with lower density fields (<64^3) taking up to a few seconds.
@@ -53,22 +53,29 @@ Changes made are accumulative, so multiple sets of force fields can be used in d
     - `CustomData_copy_data_layer: warning null data for CDMVert type (...)`
   - It looks like these appear because there is no face data in the vector field and can probably be ignored. 
  
--*The usual disclaimers apply, i.e. don't blame me if anything breaks :D (it shouldn't... I'm just covering myself)*
-
 ------------------------------------------------------------------------------------------------------- 
+ 
+## **Usage Instructions:** 
+ 
+- The ui panel is organized into four sections that can be toggled on and off by clicking their label buttons.
 
-## **Usage Instructions:** *(Some of this is old information, update in progress)* 
-
-
+ 
 ### **Creating a New Vector Field:** 
  
 - Set the resolution (X,Y,Z)
   - The maximum resolution you can set is 128x128x128 since it's the limit set in UE4's importer (not to mention the massive amount of memory you would need for more).
-- Set the scale for the volume's bounds
+- Set the scale for the volume's bounds.
+  - Scale = distance between particles in the vector field.
 - Checking *No Gravity* will disable gravity's influence on the generated particle system (Gravity field weight set to 0)
 - Click *Generate*
 - The number of vectors in the vector field to be created is shown below this button 
  
+ 
+### **Initializing Saved Vector Fields:** 
+ 
+- The velocities used by the editor need to be updated when selecting a different vector field in the same scene
+- To do this, select the object you want to edit and click 'Update Data'
+
  
 ### **Editing Process:** 
 
@@ -87,11 +94,11 @@ This way you can change the velocities in steps, allowing you to, for example, a
 5. Click *Calculate*, repeat as many times as needed
 6. *Invert* or *Normalize* the vector field if needed
 
-To help with organization when you're blending multiple force influences and settings, you can move the forces you won't be using during a bake to a different layer by pressing *M* and selecting a layer.
-
-
-**Blending Methods:**
-
+To help with organization when you're blending multiple force influences and settings, you can move the forces you won't be using during a bake to a different layer by pressing *M* and selecting a layer. 
+ 
+ 
+**Blending Methods:** 
+ 
 - ***Velocity Types:***
   - The method used to obtain current particle velocities:
   - *Velocity:*
@@ -107,6 +114,7 @@ To help with organization when you're blending multiple force influences and set
     - Useful with the Multiply blend method as a 3d scale for each velocity
   - *Point:*
     - Sets current velocities to a direction pointing away from the 3d cursor
+    - This is based on the same concepts as bent normals
 - ***Blend Method:***
   - The method used to blend saved results with current particle velocities
   - *Replace:*
@@ -118,19 +126,20 @@ To help with organization when you're blending multiple force influences and set
   - *Add:*
     - replaces saved velocities with the sum of saved and current particle velocities
   - *Multiply:*
-    - replaces saved velocities with the product of saved and current velocities
-
-*Optional parameters for calculation:*
-
+    - replaces saved velocities with the product of saved and current velocities 
+ 
+ 
+*Optional parameters for calculation:* 
+ 
 - *Selected Only*: save velocities for particles associated with vertices selected in Edit Mode
 - *Invert Next*: inverts the current particle velocities before performing calculations with them
-  - example: turn *Add* into Subtract
-
-*Separate Calculations:*
-
-  - *Normalize*: normalizes the saved velocities
-  - *Invert All*: inverts the saved velocities
-
+  - example: turn *Add* into Subtract 
+ 
+*Separate Calculations:* 
+ 
+- *Normalize*: normalizes the saved velocities
+- *Invert All*: inverts the saved velocities 
+ 
 
 
 *Curve Path Tool:* 
@@ -143,15 +152,16 @@ To help with organization when you're blending multiple force influences and set
 - Check the *Trails* box if you want the curve's influence to fade as it reaches its end
 - Apply any transforms you have on the curve
 - Click *Create*
-- This object acts like any other forcefield and can be moved
-  - Moving the curve will move the forcefields attached to it, moving the force fields will offset them from the curve
+- This creates an empty object named 'CurveForce.X' that the curve and all forcefields generated by this are parented to.
+  - Moving the empty object will move the curve and forcefields with it
+  - Moving the force fields will offset them from the curve
 - Subdivide the curve a few times to add more influence cylinders (for path smoothing) 
-
+ 
 
 
 *Importing:* 
  
-- Click *Import*, select your vector field file
+- Use 'UE4 Vector Field (.fga)' in the import menu
 - Import options:
   - *Import Scale*: Scale to apply to the file's bounds 
     - mostly used to shrink UE4 volumes to a more easily manageable size in Blender
@@ -162,11 +172,9 @@ To help with organization when you're blending multiple force influences and set
 
 *Exporting:*  
  
-- If exporting is not possible, the button will be replaced with text explaining what's going on 
- 
 Method 1 - Use settings from editor (default)
 - Select the *VF_Volume_X* object (the floating points)
-- Click *Export*
+- Use 'UE4 Vector Field (.fga)' in the export menu
 - Regular Export Options:
   - *Export Scale*: a multiplier for the size of the vector field in UE4. 
     - The actual size in UE4 will be: *Bounds Scale* x (the vector field's resolution) cm^3
@@ -204,6 +212,7 @@ Method 2: Manual Bounds (advanced)
 
 
 *Basic Fluid Volume Simulation:* 
+- (more a container filled with a liquid, not actual fluid simulation) 
  
 - Go to the vector field's Particle Properties
   - change the Physics Type to Fluid

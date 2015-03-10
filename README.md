@@ -7,7 +7,12 @@ Allows creation and manipulation of vector fields using Blender particle simulat
  
 **New Documentation is available here**: https://github.com/isathar/Blender_UE4_VectorFieldEditor/wiki (or the wiki link on the side) 
 - Still wip, but almost finished. 
- 
+  
+Example .blend file with a few different vector fields available here: http://www.mediafire.com/download/6t00h4g25ikxq5i/VF_Examples.blend  
+  
+Archive with some .fga files exported from the above: http://www.mediafire.com/download/4x174fgf8lmec6g/VF_Examples.zip  
+  
+  
 ------------------------------------------------------------------------------------------------------- 
 
 ## Features  
@@ -26,7 +31,7 @@ Allows creation and manipulation of vector fields using Blender particle simulat
 ## Installation  
  
 - Extract to your addons directory
-- Enable it in the addon manager (named "FGA Vector Field Tools")
+- Enable it in the addon manager (named *FGA Vector Field Tools*)
 - A new section called *Vector Fields* should be available in the tools panel 
  
 --------------------------------------------------------------------------------------------------------- 
@@ -56,32 +61,32 @@ Allows creation and manipulation of vector fields using Blender particle simulat
   
 ## Changelog:  
  
-- v1.0.0
- - *General:*
-   - tools panel category renamed to 'Vector Fields'
-   - saved data only includes velocities now (removed position, index)
-     - files made with old versions are still compatible
-   - cleaned up ui panel to reduce clutter, added section toggles
-   - some code cleanup
- - *Import/Export:*
-   - moved import/export to standard menu
-   - made import/export properties local to their functions
- - *Editor:*
-   - performance tweaks for creating new vector fields + calculating velocities
-   - removed slice selection tool (redundant, easily done in edit mode)
-   - matched default scaling to grid units * field density
-     - distances were at half scale before
-     - density variable used for creation is now distance between particles
-   - added undo functionality to 'generate' function
-   - new velocity mode: Point
- - *Curve Force Tool:*
-   - changed curve force tool to create an object group to remove scene outliner clutter
-   - fixed curve force fields' parenting issue
-     - all transformations to the curve force object should now work
-   - curve forces now display an arrow pointing in the force's direction  
+- ***v1.0.0*** (current):
+  - *General:*
+    - tools panel category renamed to *Vector Fields*
+    - saved data only includes velocities now (removed position, index)
+      - files made with old versions are still compatible
+    - cleaned up ui panel to reduce clutter, added section toggles
+    - some code cleanup
+  - *Import/Export:*
+    - moved import/export to standard menu
+    - made import/export properties local to their functions
+  - *Editor:*
+    - performance tweaks for creating new vector fields + calculating velocities
+    - removed slice selection tool (redundant, easily done in edit mode)
+    - matched default scaling to (grid units x field density)
+      - distances were at half scale before
+      - density variable used for creation is now distance between particles
+    - added undo functionality to *Generate* function
+    - new velocity mode: Point
+  - *Curve Force Tool:*
+    - changed curve force tool to create an object group to remove scene outliner clutter
+    - fixed curve force fields' parenting issue
+      - all transformations to the curve force object should now work
+    - curve forces now display an arrow pointing in the force's direction 
 
 
-- v0.9.5
+- v0.9.5:
   - *Editor:*
     - added new calculation method: Multiply
     - added different methods for obtaining velocities
@@ -104,8 +109,8 @@ Allows creation and manipulation of vector fields using Blender particle simulat
     - added bug reporting url to addon manager (Github)
     - readme formatting  
 
--v0.9.1
-  - added different generation modes: Replace, Additive, Average
+- v0.9.1
+  - added different generation modes: *Replace, Additive, Average*
   - added trail option for curve path (fade influence with curve position)
   - changed the way invert and normalize work
   - slight calculation performance tweak

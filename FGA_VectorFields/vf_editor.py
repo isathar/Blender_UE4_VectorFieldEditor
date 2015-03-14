@@ -216,13 +216,14 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			
 		# average
 		elif context.window_manager.pvelocity_genmode == 'AVG':
+			avgratio = context.window_manager.pvelocity_avgratio
 			if useselection:
 				for i in range(len(particleslist)):
 					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
+						vf_vdata.particle_velocitieslist[i] = ((vf_vdata.particle_velocitieslist[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
 			else:
 				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
+					vf_vdata.particle_velocitieslist[i] = ((vf_vdata.particle_velocitieslist[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
 			
 		# replace
 		elif context.window_manager.pvelocity_genmode == 'REP':
@@ -387,9 +388,10 @@ class edit_curvewindforce(bpy.types.Operator):
 		objlist = [obj for obj in context.scene.objects if obj.parent == curveforceobj]
 		
 		for obj in objlist:
-			obj.field.strength = newStrength
-			obj.field.distance_max = newDistance
-			obj.field.falloff_power = newFalloff
+			if 'ForceObj' in obj.name:
+				obj.field.strength = newStrength
+				obj.field.distance_max = newDistance
+				obj.field.falloff_power = newFalloff
 		
 		return {'FINISHED'}
 

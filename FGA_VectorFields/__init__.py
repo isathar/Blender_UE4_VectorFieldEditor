@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 0, 0),
+	"version": (1, 0, 1),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -83,23 +83,32 @@ class vectorfieldtools_panel(bpy.types.Panel):
 		box = layout.box()
 		box.prop(context.window_manager, 'show_toolspanel', toggle=True, text="Tools")
 		if context.window_manager.show_toolspanel:
-			# 	# Curve Path
+			#	# Wind Curve Force
 			box = box.box()
-			box.label("Curve Path:", 'NONE')
-			if context.active_object != None:
-				if context.active_object.type == 'CURVE':
-					box.row(align=True).prop(context.window_manager, 'curveForce_strength', text='Strength')
-					box.row(align=True).prop(context.window_manager, 'curveForce_maxDist', text='Distance')
-					box.row(align=True).prop(context.window_manager, 'curveForce_falloffPower', text='Power')
-					box.row(align=True).prop(context.window_manager, 'curveForce_trailout', text='Trail')
-					box.row(align=True).operator('object.calc_pathalongspline', text='Create')
-				else:
-					box.row(align=True).label("Select a curve", 'NONE')
+			box.prop(context.window_manager, 'show_windcurvetool', toggle=True, text="Wind Curve Force")
+			if context.active_object:
+				if context.active_object.type == 'CURVE' or 'CurveForce' in context.active_object.name:
+					if context.window_manager.show_windcurvetool:
+						if context.active_object:
+							if context.active_object.type == 'CURVE':
+								box.row(align=True).prop(context.window_manager, 'curveForce_strength', text='Strength')
+								box.row(align=True).prop(context.window_manager, 'curveForce_maxDist', text='Distance')
+								box.row(align=True).prop(context.window_manager, 'curveForce_falloffPower', text='Power')
+								box.row(align=True).prop(context.window_manager, 'curveForce_trailout', text='Trail')
+								box.row(align=True).operator('object.calc_curvewindforce', text='Create New')
+							elif 'CurveForce' in context.active_object.name:
+								box.row(align=True).prop(context.window_manager, 'curveForce_strength', text='Strength')
+								box.row(align=True).prop(context.window_manager, 'curveForce_maxDist', text='Distance')
+								box.row(align=True).prop(context.window_manager, 'curveForce_falloffPower', text='Power')
+								box.row(align=True).operator('object.edit_curvewindforce', text='Edit Selected')
 			else:
-				box.row(align=True).label("Select a curve", 'NONE')
+				box.row().label('Select a curve or curve force')
+				box.enabled = False
 			
-			#	# TBD: add more tools
-
+			#	# TBD: Spline Path
+			
+			#	# TBD: more tools
+		
 
 
 # Saved Data
@@ -316,6 +325,9 @@ def initdefaults():
 	bpy.types.WindowManager.show_toolspanel = bpy.props.BoolProperty(
 		default=False,description="Toggle Section"
 	)
+	bpy.types.WindowManager.show_windcurvetool = bpy.props.BoolProperty(
+		default=False,description="Toggle Section"
+	)
 	
 
 def clearvars():
@@ -326,7 +338,7 @@ def clearvars():
 		'pvelocity_invert','pvelocity_selection','pvelocity_avgratio','pvelocity_dirvector',
 		'curveForce_strength','curveForce_maxDist','curveForce_falloffPower','curveForce_trailout','curveForce_dispSize'
 		'vf_showingvelocitylines',
-		'show_createpanel','show_editpanel','show_displaypanel','show_toolspanel'
+		'show_createpanel','show_editpanel','show_displaypanel','show_toolspanel','show_windcurvetool'
 	]
 	
 	for p in props:
@@ -344,7 +356,9 @@ def register():
 	
 	bpy.utils.register_class(vf_editor.calc_vectorfieldvelocities)
 	bpy.utils.register_class(vf_editor.create_vectorfield)
-	bpy.utils.register_class(vf_editor.calc_pathalongspline)
+	bpy.utils.register_class(vf_editor.calc_curvewindforce)
+	bpy.utils.register_class(vf_editor.edit_curvewindforce)
+	
 	bpy.utils.register_class(vf_editor.toggle_vectorfieldvelocities)
 	bpy.utils.register_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.register_class(vf_editor.vf_invertvelocities)
@@ -367,7 +381,9 @@ def unregister():
 	
 	bpy.utils.unregister_class(vf_editor.calc_vectorfieldvelocities)
 	bpy.utils.unregister_class(vf_editor.create_vectorfield)
-	bpy.utils.unregister_class(vf_editor.calc_pathalongspline)
+	bpy.utils.unregister_class(vf_editor.calc_curvewindforce)
+	bpy.utils.unregister_class(vf_editor.edit_curvewindforce)
+	
 	bpy.utils.unregister_class(vf_editor.toggle_vectorfieldvelocities)
 	bpy.utils.unregister_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.unregister_class(vf_editor.vf_invertvelocities)

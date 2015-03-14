@@ -63,7 +63,8 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
   
 - ***v1.0.1*** (current):  
   - renamed curve path tool to Wind Curve Force
-  - added editor for created curve wind force strength, distance + falloff  
+  - added editor for created curve wind force strength, distance + falloff
+  - the Ratio property should now work (apparently forgot to use the variable)  
   
   
 - ***v1.0.0***:

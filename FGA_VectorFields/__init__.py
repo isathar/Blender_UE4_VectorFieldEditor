@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 0, 1),
+	"version": (1, 0, 0),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -289,7 +289,8 @@ def initdefaults():
 		default=False,description="Replace selected particles' velocities only"
 	)
 	bpy.types.WindowManager.pvelocity_avgratio = bpy.props.FloatProperty(
-		default=0.5,description="The ratio between the current and new velocities"
+		default=0.5,min=0.0,max=1.0,
+		description="The ratio between the current and new velocities"
 	)
 	bpy.types.WindowManager.pvelocity_dirvector = bpy.props.FloatVectorProperty(
 		default=(0.0,0.0,1.0),subtype='TRANSLATION',min=-16.0,max=16.0,

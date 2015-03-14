@@ -14,9 +14,9 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
   
   
 ------------------------------------------------------------------------------------------------------- 
-
+ 
 ## Features  
-
+ 
 **Vector Field Editor:**
 - Saves current particle system velocities and blends them with saved results using one of the following methods:
   - *Replace, Average, Add, Multiply*
@@ -47,21 +47,26 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
  
 ###### 128x128x128 and System Memory  
 - Editing a 128x128x128 vector field requires a 64-bit system and Blender install, as well as a large amount (> 6-8 GB) of system memory.
-  - This is due to the amount of particles that need to have their dynamics cached
-  - To avoid running out of memory while editing very high resolution vector fields, you may want to lower your undo history steps.
-  - Using a disk cache for your particles may help, too. 
+- This is due to the amount of particles that need to have their dynamics cached
+- To avoid running out of memory while editing very high resolution vector fields, you may want to lower your undo history steps.
+- Using a disk cache for your particles may help, too. 
  
 ###### Console Warning Messages  
 - While creating new vector fields, the following messages will appear in your console window:
-  - `CustomData_copy_data_layer: warning null data for CDOrco type (...)`
-  - `CustomData_copy_data_layer: warning null data for CDMVert type (...)`
-  - It looks like these appear because there is no face data in the vector field and can probably be ignored. 
+- `CustomData_copy_data_layer: warning null data for CDOrco type (...)`
+- `CustomData_copy_data_layer: warning null data for CDMVert type (...)`
+- It looks like these appear because there is no face data in the vector field and can probably be ignored. 
  
 ------------------------------------------------------------------------------------------------------- 
   
 ## Changelog:  
- 
-- ***v1.0.0*** (current):
+  
+- ***v1.0.1*** (current):  
+  - renamed curve path tool to Wind Curve Force
+  - added editor for created curve wind force strength, distance + falloff  
+  
+  
+- ***v1.0.0***:
   - *General:*
     - tools panel category renamed to *Vector Fields*
     - saved data only includes velocities now (removed position, index)

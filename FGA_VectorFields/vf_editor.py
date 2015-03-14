@@ -9,225 +9,6 @@ from mathutils import Vector, Matrix
 from . import vf_vdata
 
 
-# Performs vector math + writes results to data
-class calc_vectorfieldvelocities(bpy.types.Operator):
-	bl_idname = 'object.calc_vectorfieldvelocities'
-	bl_label = 'Save VF EndLocations'
-	bl_description = 'Calculate and save velocities'
-	bl_options = {'REGISTER', 'UNDO'}
-
-	@classmethod
-	def poll(cls, context):
-		return (context.mode == "OBJECT" and context.active_object != None) and 'VF_Volume_' in context.active_object.name
-	
-	def execute(self, context):
-		invmult = -1.0 if context.window_manager.pvelocity_invert else 1.0
-		
-		useselection = context.window_manager.pvelocity_selection
-		
-		me = context.active_object.data
-		me.update()
-		
-		particleslist = []
-		
-		## Get velocities
-		if context.window_manager.pvelocity_veltype == "VECT":
-			tempvect = Vector(context.window_manager.pvelocity_dirvector)
-			particleslist = [tempvect for p in context.active_object.particle_systems[0].particles]
-		elif context.window_manager.pvelocity_veltype == "DIST":
-			tplist = context.active_object.particle_systems[0].particles
-			particleslist = [(tplist[i].location - vf_vdata.particle_startlocs[i]) for i in range(len(tplist))]
-		elif context.window_manager.pvelocity_veltype == "ANGVEL":
-			particleslist = [p.angular_velocity for p in context.active_object.particle_systems[0].particles]
-		elif context.window_manager.pvelocity_veltype == "PNT":
-			cursorloc = context.scene.cursor_location
-			particleslist = [(v.co - cursorloc).normalized() for v in me.vertices]
-		else:
-			particleslist = [p.velocity for p in context.active_object.particle_systems[0].particles]
-		
-		mvertslist = []
-		if useselection:
-			mvertslist = [v.select for v in me.vertices]
-		
-		
-		## Blend with List / calculate
-		
-		# multiply
-		if context.window_manager.pvelocity_genmode == 'MULT':
-			if useselection:
-				for i in range(len(particleslist)):
-					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = Vector(
-							(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
-							vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
-							vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
-						)
-			else:
-				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = Vector(
-						(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
-						vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
-						vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
-					)
-			
-		# add
-		elif context.window_manager.pvelocity_genmode == 'ADD':
-			if useselection:
-				for i in range(len(particleslist)):
-					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
-			else:
-				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
-			
-		# average
-		elif context.window_manager.pvelocity_genmode == 'AVG':
-			if useselection:
-				for i in range(len(particleslist)):
-					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
-			else:
-				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
-			
-		# replace
-		elif context.window_manager.pvelocity_genmode == 'REP':
-			if useselection:
-				for i in range(len(particleslist)):
-					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
-			else:
-				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
-		
-		
-		save_velobjectdata(context.active_object)
-		
-		return {'FINISHED'}
-
-
-# Normalizes the list
-class vf_normalizevelocities(bpy.types.Operator):
-	bl_idname = 'object.vf_normalizevelocities'
-	bl_label = 'Normalize'
-	bl_description = 'Normalizes the currently saved velocity list'
-	bl_options = {'REGISTER', 'UNDO'}
-
-	@classmethod
-	def poll(cls, context):
-		return context.active_object != None and 'VF_Volume_' in context.active_object.name
-	
-	def execute(self, context):
-		for i in range(len(vf_vdata.particle_velocitieslist)):
-			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i].normalized()
-		
-		return {'FINISHED'}
-
-# Inverts the list
-class vf_invertvelocities(bpy.types.Operator):
-	bl_idname = 'object.vf_invertvelocities'
-	bl_label = 'Invert All'
-	bl_description = 'Inverts the currently saved velocity list'
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	@classmethod
-	def poll(cls, context):
-		return context.active_object != None and 'VF_Volume_' in context.active_object.name
-	
-	def execute(self, context):
-		for i in range(len(vf_vdata.particle_velocitieslist)):
-			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] * -1.0
-		return {'FINISHED'}
-
-
-# creates a wind tunnel from selected curve object
-class calc_pathalongspline(bpy.types.Operator):
-	bl_idname = 'object.calc_pathalongspline'
-	bl_label = 'Path along spline'
-	bl_description = 'create wind forces along a spline to direct velocities along it'
-	bl_options = {'REGISTER', 'UNDO'}
-	
-	@classmethod
-	def poll(cls, context):
-		return (context.mode == "OBJECT" and context.active_object != None) and context.active_object.type == 'CURVE'
-	
-	def execute(self, context):
-		curvepoints = []
-		curveobj = context.active_object
-		
-		bpy.ops.object.empty_add(type='PLAIN_AXES')
-		parentobj = context.active_object
-		parentobj.name = 'CurveForce'
-		
-		if len(curveobj.data.splines[0].bezier_points) > 1:
-			curvepoints = [v.co for v in curveobj.data.splines[0].bezier_points]
-		else:
-			curvepoints = [v.co for v in curveobj.data.splines[0].points]
-		
-		curveobj.parent = parentobj
-		context.active_object.select = False
-		curveobj.select = True
-		
-		previousnormal = Vector([0.0,0.0,0.0])
-		
-		lastStrength = context.window_manager.curveForce_strength
-		lastDistance = context.window_manager.curveForce_maxDist
-		
-		for i in range(len(curvepoints)):
-			cpoint = Vector([curvepoints[i][0],curvepoints[i][1],curvepoints[i][2]])
-			
-			bpy.ops.object.empty_add(type='SINGLE_ARROW',location=(cpoint))
-			context.active_object.name = 'ForceObj'
-			# turn into forcefield
-			bpy.ops.object.forcefield_toggle()
-			context.active_object.field.type = 'WIND'
-			
-			if context.window_manager.curveForce_trailout:
-				if i > 0:
-					lastStrength = lastStrength * 0.9
-					lastDistance = lastDistance * 0.9
-			
-			context.active_object.field.strength = lastStrength
-			context.active_object.field.use_max_distance = True
-			context.active_object.field.distance_max = lastDistance
-			context.active_object.field.falloff_power = context.window_manager.curveForce_falloffPower
-			
-			# get the curve's direction between points
-			tempnorm = Vector([0,0,0])
-			if (i < len(curvepoints) - 1):
-				cpoint2 = Vector([curvepoints[i + 1][0],curvepoints[i + 1][1],curvepoints[i + 1][2]])
-				tempnorm = cpoint - cpoint2
-				if i > 0:
-					if abs(previousnormal.length) > 0.0:
-						tempnorm = (tempnorm + previousnormal) / 2.0
-				previousnormal = tempnorm
-			else:
-				if curveobj.data.splines[0].use_cyclic_u or curveobj.data.splines[0].use_cyclic_u:
-					cpoint2 = Vector([curvepoints[0][0],curvepoints[0][1],curvepoints[0][2]])
-					tempnorm = cpoint - cpoint2
-					if abs(previousnormal.length) > 0.0:
-						tempnorm = (tempnorm + previousnormal) / 2.0
-					previousnormal = tempnorm
-				else:
-					cpoint2 = Vector([curvepoints[i - 1][0],curvepoints[i - 1][1],curvepoints[i - 1][2]])
-					tempnorm = cpoint2 - cpoint
-					if abs(previousnormal.length) > 0.0:
-						tempnorm = (tempnorm + previousnormal) / 2.0
-					previousnormal = tempnorm
-			
-			if abs(tempnorm.length) > 0.0:
-				z = Vector((0,0,1))
-				angle = tempnorm.angle(z)
-				axis = z.cross(tempnorm)
-				mat = Matrix.Rotation(angle, 4, axis)
-				mat_world = context.active_object.matrix_world * mat
-				context.active_object.matrix_world = mat_world
-			
-			context.active_object.parent = parentobj
-		
-		return {'FINISHED'}
-
-
 ### Create
 
 # Creates a new vector field from parameters
@@ -359,6 +140,259 @@ class create_vectorfield(bpy.types.Operator):
 	def execute(self, context):
 		build_vectorfield(context)
 		return {'FINISHED'}
+
+
+
+# Performs vector math + writes results to data
+class calc_vectorfieldvelocities(bpy.types.Operator):
+	bl_idname = 'object.calc_vectorfieldvelocities'
+	bl_label = 'Save VF EndLocations'
+	bl_description = 'Calculate and save velocities'
+	bl_options = {'REGISTER', 'UNDO'}
+
+	@classmethod
+	def poll(cls, context):
+		return (context.mode == "OBJECT" and context.active_object != None) and 'VF_Volume_' in context.active_object.name
+	
+	def execute(self, context):
+		invmult = -1.0 if context.window_manager.pvelocity_invert else 1.0
+		
+		useselection = context.window_manager.pvelocity_selection
+		
+		me = context.active_object.data
+		me.update()
+		
+		particleslist = []
+		
+		## Get velocities
+		if context.window_manager.pvelocity_veltype == "VECT":
+			tempvect = Vector(context.window_manager.pvelocity_dirvector)
+			particleslist = [tempvect for p in context.active_object.particle_systems[0].particles]
+		elif context.window_manager.pvelocity_veltype == "DIST":
+			tplist = context.active_object.particle_systems[0].particles
+			particleslist = [(tplist[i].location - vf_vdata.particle_startlocs[i]) for i in range(len(tplist))]
+		elif context.window_manager.pvelocity_veltype == "ANGVEL":
+			particleslist = [p.angular_velocity for p in context.active_object.particle_systems[0].particles]
+		elif context.window_manager.pvelocity_veltype == "PNT":
+			cursorloc = context.scene.cursor_location
+			particleslist = [(v.co - cursorloc).normalized() for v in me.vertices]
+		else:
+			particleslist = [p.velocity for p in context.active_object.particle_systems[0].particles]
+		
+		mvertslist = []
+		if useselection:
+			mvertslist = [v.select for v in me.vertices]
+		
+		
+		## Blend with List / calculate
+		
+		# multiply
+		if context.window_manager.pvelocity_genmode == 'MULT':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = Vector(
+							(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
+							vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
+							vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+						)
+			else:
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = Vector(
+						(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
+						vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
+						vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+					)
+			
+		# add
+		elif context.window_manager.pvelocity_genmode == 'ADD':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
+			else:
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
+			
+		# average
+		elif context.window_manager.pvelocity_genmode == 'AVG':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
+			else:
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = (vf_vdata.particle_velocitieslist[i] + (particleslist[i] * invmult)) * 0.5
+			
+		# replace
+		elif context.window_manager.pvelocity_genmode == 'REP':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
+			else:
+				for i in range(len(particleslist)):
+					vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
+		
+		
+		save_velobjectdata(context.active_object)
+		
+		return {'FINISHED'}
+
+
+# Normalizes the list
+class vf_normalizevelocities(bpy.types.Operator):
+	bl_idname = 'object.vf_normalizevelocities'
+	bl_label = 'Normalize'
+	bl_description = 'Normalizes the currently saved velocity list'
+	bl_options = {'REGISTER', 'UNDO'}
+
+	@classmethod
+	def poll(cls, context):
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
+	
+	def execute(self, context):
+		for i in range(len(vf_vdata.particle_velocitieslist)):
+			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i].normalized()
+		
+		return {'FINISHED'}
+
+# Inverts the list
+class vf_invertvelocities(bpy.types.Operator):
+	bl_idname = 'object.vf_invertvelocities'
+	bl_label = 'Invert All'
+	bl_description = 'Inverts the currently saved velocity list'
+	bl_options = {'REGISTER', 'UNDO'}
+	
+	@classmethod
+	def poll(cls, context):
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
+	
+	def execute(self, context):
+		for i in range(len(vf_vdata.particle_velocitieslist)):
+			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] * -1.0
+		return {'FINISHED'}
+
+
+# Tools:
+
+# Curve Wind Force:
+
+# creates a wind tunnel from selected curve object
+class calc_curvewindforce(bpy.types.Operator):
+	bl_idname = 'object.calc_curvewindforce'
+	bl_label = 'Curve Wind force'
+	bl_description = 'create wind forces along a spline to direct velocities along it'
+	bl_options = {'REGISTER', 'UNDO'}
+	
+	@classmethod
+	def poll(cls, context):
+		return (context.mode == "OBJECT" and context.active_object != None) and context.active_object.type == 'CURVE'
+	
+	def execute(self, context):
+		curvepoints = []
+		curveobj = context.active_object
+		
+		bpy.ops.object.empty_add(type='PLAIN_AXES')
+		parentobj = context.active_object
+		parentobj.name = 'CurveForce'
+		
+		if len(curveobj.data.splines[0].bezier_points) > 1:
+			curvepoints = [v.co for v in curveobj.data.splines[0].bezier_points]
+		else:
+			curvepoints = [v.co for v in curveobj.data.splines[0].points]
+		
+		curveobj.parent = parentobj
+		context.active_object.select = False
+		curveobj.select = True
+		
+		previousnormal = Vector([0.0,0.0,0.0])
+		
+		lastStrength = context.window_manager.curveForce_strength
+		lastDistance = context.window_manager.curveForce_maxDist
+		
+		for i in range(len(curvepoints)):
+			cpoint = Vector([curvepoints[i][0],curvepoints[i][1],curvepoints[i][2]])
+			
+			bpy.ops.object.empty_add(type='SINGLE_ARROW',location=(cpoint))
+			context.active_object.name = 'ForceObj'
+			# turn into forcefield
+			bpy.ops.object.forcefield_toggle()
+			context.active_object.field.type = 'WIND'
+			
+			if context.window_manager.curveForce_trailout:
+				if i > 0:
+					lastStrength = lastStrength * 0.9
+					lastDistance = lastDistance * 0.9
+			
+			context.active_object.field.strength = lastStrength
+			context.active_object.field.use_max_distance = True
+			context.active_object.field.distance_max = lastDistance
+			context.active_object.field.falloff_power = context.window_manager.curveForce_falloffPower
+			
+			# get the curve's direction between points
+			tempnorm = Vector([0,0,0])
+			if (i < len(curvepoints) - 1):
+				cpoint2 = Vector([curvepoints[i + 1][0],curvepoints[i + 1][1],curvepoints[i + 1][2]])
+				tempnorm = cpoint - cpoint2
+				if i > 0:
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+				previousnormal = tempnorm
+			else:
+				if curveobj.data.splines[0].use_cyclic_u or curveobj.data.splines[0].use_cyclic_u:
+					cpoint2 = Vector([curvepoints[0][0],curvepoints[0][1],curvepoints[0][2]])
+					tempnorm = cpoint - cpoint2
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+					previousnormal = tempnorm
+				else:
+					cpoint2 = Vector([curvepoints[i - 1][0],curvepoints[i - 1][1],curvepoints[i - 1][2]])
+					tempnorm = cpoint2 - cpoint
+					if abs(previousnormal.length) > 0.0:
+						tempnorm = (tempnorm + previousnormal) / 2.0
+					previousnormal = tempnorm
+			
+			if abs(tempnorm.length) > 0.0:
+				z = Vector((0,0,1))
+				angle = tempnorm.angle(z)
+				axis = z.cross(tempnorm)
+				mat = Matrix.Rotation(angle, 4, axis)
+				mat_world = context.active_object.matrix_world * mat
+				context.active_object.matrix_world = mat_world
+			
+			context.active_object.parent = parentobj
+		
+		return {'FINISHED'}
+
+# creates a wind tunnel from selected curve object
+class edit_curvewindforce(bpy.types.Operator):
+	bl_idname = 'object.edit_curvewindforce'
+	bl_label = 'Curve Wind force'
+	bl_description = 'Edit settings on the selected curve wind force object'
+	bl_options = {'REGISTER', 'UNDO'}
+	
+	@classmethod
+	def poll(cls, context):
+		if context.mode == "OBJECT" and context.active_object != None:
+			return 'CurveForce' in context.active_object.name
+	
+	def execute(self, context):
+		newStrength = context.window_manager.curveForce_strength
+		newDistance = context.window_manager.curveForce_maxDist
+		newFalloff = context.window_manager.curveForce_falloffPower
+		
+		curveforceobj = context.active_object
+		
+		objlist = [obj for obj in context.scene.objects if obj.parent == curveforceobj]
+		
+		for obj in objlist:
+			obj.field.strength = newStrength
+			obj.field.distance_max = newDistance
+			obj.field.falloff_power = newFalloff
+		
+		return {'FINISHED'}
+
 
 
 

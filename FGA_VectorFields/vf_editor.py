@@ -427,7 +427,7 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 	def modal(self, context, event):
 		if context.area:
 			context.area.tag_redraw()
-
+		
 		if context.window_manager.vf_showingvelocitylines == -1:
 			bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
 			context.window_manager.vf_showingvelocitylines = 0
@@ -614,12 +614,12 @@ def parse_fgafile(self, context):
 
 ### Export
 
-def write_fgafile(self, context):
+def write_fgafile(self, exportvol):
 	usevelscale = self.exportvf_velscale
 	useoffset = self.exportvf_locoffset
 	
-	tempDensity = Vector(context.active_object.vf_object_density)
-	fgascale = Vector(context.active_object.vf_object_scale)
+	tempDensity = Vector(exportvol.vf_object_density)
+	fgascale = Vector(exportvol.vf_object_scale)
 	
 	file = open(self.filepath, "w", encoding="utf8", newline="\n")
 	fw = file.write
@@ -641,7 +641,7 @@ def write_fgafile(self, context):
 		)
 	else:
 		if useoffset:
-			offsetvect = context.active_object.parent.location
+			offsetvect = exportvol.parent.location
 			fw("\n%f,%f,%f," % (
 				(((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
 				(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,
@@ -666,7 +666,7 @@ def write_fgafile(self, context):
 	
 	# Velocities
 	if usevelscale and not self.exportvf_allowmanualbounds:
-		for vec in context.active_object.custom_vectorfield:
+		for vec in exportvol.custom_vectorfield:
 			fw("\n%f,%f,%f," % (
 				vec.vvelocity[0] * self.exportvf_scale,
 				vec.vvelocity[1] * self.exportvf_scale,
@@ -674,14 +674,14 @@ def write_fgafile(self, context):
 			)
 	else:
 		if self.exportvf_allowmanualbounds:
-			for vec in context.active_object.custom_vectorfield:
+			for vec in exportvol.custom_vectorfield:
 				fw("\n%f,%f,%f," % (
 					vec.vvelocity[0] * self.exportvf_manualvelocityscale,
 					vec.vvelocity[1] * self.exportvf_manualvelocityscale,
 					vec.vvelocity[2] * self.exportvf_manualvelocityscale)
 				)
 		else:
-			for vec in context.active_object.custom_vectorfield:
+			for vec in exportvol.custom_vectorfield:
 				fw("\n%f,%f,%f," % (
 					vec.vvelocity[0],
 					vec.vvelocity[1],

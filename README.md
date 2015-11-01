@@ -61,6 +61,11 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
   
 ## Changelog:  
   
+- ***v1.1.2*** (current):  
+   - added support for selecting a physics preset to edit particle physics settings easily for selected vector field
+   - new presets can be added/removed
+   - export should now work with any part of the vector field selected (or both)
+   
 - ***v1.0.1*** (current):  
   - renamed curve path tool to Wind Curve Force
   - added editor for created curve wind force strength, distance + falloff

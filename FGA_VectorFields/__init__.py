@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 0, 0),
+	"version": (1, 1, 2),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -15,6 +15,8 @@ bl_info = {
 import bpy
 from bpy_extras.io_utils import (ImportHelper,ExportHelper,path_reference_mode)
 
+from bl_operators.presets import AddPresetBase
+
 from . import vf_editor
 
 
@@ -24,7 +26,7 @@ class vectorfieldtools_panel(bpy.types.Panel):
 	bl_label = 'FGA Tools'
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS'
-	bl_category = "Vector Fields"
+	bl_category = "Particle Simulation"
 
 	def __init__(self):
 		pass
@@ -48,6 +50,18 @@ class vectorfieldtools_panel(bpy.types.Panel):
 			box.row().operator('object.create_vectorfield', text='Generate')
 			numObjects = context.window_manager.vf_density[0] * context.window_manager.vf_density[1] * context.window_manager.vf_density[2]
 			box.row().label("# of vectors: " + str(numObjects), 'NONE')
+			row = box.row()
+			if context.active_object:
+				if context.active_object.particle_systems:
+					if context.active_object.particle_systems[0]:
+						if context.active_object.particle_systems[0].settings.physics_type == 'FLUID':
+							row.menu("Presets_VFCreate_Fluid",text=bpy.types.Presets_VFCreate_Fluid.bl_label)
+							row.operator("object.preset_vfcreate_fluid", text="", icon='ZOOMIN')
+							row.operator("object.preset_vfcreate_fluid", text="", icon='ZOOMOUT').remove_active = True
+						elif context.active_object.particle_systems[0].settings.physics_type == 'NEWTON':
+							row.menu("Presets_VFCreate",text=bpy.types.Presets_VFCreate.bl_label)
+							row.operator("object.preset_vfcreate", text="", icon='ZOOMIN')
+							row.operator("object.preset_vfcreate", text="", icon='ZOOMOUT').remove_active = True
 		
 		# Edit
 		box = layout.box()
@@ -183,11 +197,21 @@ class export_vectorfieldfile(bpy.types.Operator, ExportHelper):
 		else:
 			if context.active_object != None:
 				if 'custom_vectorfield' in context.active_object:
-					vf_editor.write_fgafile(self, context)
+					vf_editor.write_fgafile(self, context.active_object)
 				else:
-					raise Exception("no velocities to export")
+					activeobj = context.active_object
+					found = False
+					for obj in context.selectable_objects:
+						if obj.parent == activeobj:
+							if 'custom_vectorfield' in obj:
+								vf_editor.write_fgafile(self, obj)
+								found = True
+								break
+					
+					if not found:
+						raise Exception("No velocities")
 			else:
-				raise Exception("no selection to export")
+				raise Exception("Nothing selected")
 		
 		return {'FINISHED'}
 
@@ -232,6 +256,77 @@ class import_vectorfieldfile(bpy.types.Operator, ImportHelper):
 		print ("FGA Import: " + retmessage + " (" + self.filepath + ")")
 		
 		return {'FINISHED'}
+
+
+class Preset_VFCreate(AddPresetBase, bpy.types.Operator):
+	bl_idname = 'object.preset_vfcreate'
+	bl_label = 'Physics Presets'
+	bl_options = {'REGISTER', 'UNDO'}
+	preset_menu = 'Presets_VFCreate'
+	preset_subdir = 'VF_Default_Presets'
+
+	preset_defines = [
+		"PSystem  = bpy.context.active_object.particle_systems[0].settings"
+		]
+
+	preset_values = [
+		# standard
+		"PSystem.effector_weights.gravity",
+		"PSystem.factor_random",
+		"PSystem.particle_size",
+		"PSystem.size_random",
+		"PSystem.mass",
+		"PSystem.brownian_factor",
+		"PSystem.drag_factor",
+		"PSystem.damping"
+		]
+
+
+class Preset_VFCreate_Fluid(AddPresetBase, bpy.types.Operator):
+	bl_idname = 'object.preset_vfcreate_fluid'
+	bl_label = 'Fluid Physics Presets'
+	bl_options = {'REGISTER', 'UNDO'}
+	preset_menu = 'Presets_VFCreate_Fluid'
+	preset_subdir = 'VF_Fluid_Presets'
+
+	preset_defines = [
+		"PSystem  = bpy.context.active_object.particle_systems[0].settings"
+		]
+
+	preset_values = [
+		# standard
+		"PSystem.effector_weights.gravity",
+		"PSystem.factor_random",
+		"PSystem.particle_size",
+		"PSystem.size_random",
+		"PSystem.mass",
+		"PSystem.brownian_factor",
+		"PSystem.drag_factor",
+		"PSystem.damping",
+		# fluid
+		"PSystem.fluid.stiffness",
+		"PSystem.fluid.linear_viscosity",
+		"PSystem.fluid.buoyancy",
+		"PSystem.fluid.stiff_viscosity",
+		"PSystem.fluid.fluid_radius",
+		"PSystem.fluid.rest_density"
+		]
+
+
+class Presets_VFCreate(bpy.types.Menu):
+	bl_label = "Physics Presets"
+	bl_idname = "Presets_VFCreate"
+	preset_subdir = "VF_Default_Presets"
+	preset_operator = "script.execute_preset"
+	draw = bpy.types.Menu.draw_preset
+
+
+class Presets_VFCreate_Fluid(bpy.types.Menu):
+	bl_label = "Fluid Presets"
+	bl_idname = "Presets_VFCreate_Fluid"
+	preset_subdir = "VF_Fluid_Presets"
+	preset_operator = "script.execute_preset"
+	draw = bpy.types.Menu.draw_preset
 
 
 def exportmenu_func(self, context):
@@ -352,8 +447,18 @@ def clearvars():
 			pass
 
 
+
+
+
 def register():
 	bpy.utils.register_class(vector_field)
+	
+	bpy.utils.register_class(Presets_VFCreate)
+	bpy.utils.register_class(Preset_VFCreate)
+	
+	bpy.utils.register_class(Presets_VFCreate_Fluid)
+	bpy.utils.register_class(Preset_VFCreate_Fluid)
+	
 	
 	bpy.utils.register_class(vf_editor.calc_vectorfieldvelocities)
 	bpy.utils.register_class(vf_editor.create_vectorfield)
@@ -379,6 +484,12 @@ def register():
 
 def unregister():
 	bpy.utils.unregister_class(vectorfieldtools_panel)
+	
+	bpy.utils.unregister_class(Presets_VFCreate)
+	bpy.utils.unregister_class(Preset_VFCreate)
+	
+	bpy.utils.unregister_class(Presets_VFCreate_Fluid)
+	bpy.utils.unregister_class(Preset_VFCreate_Fluid)
 	
 	bpy.utils.unregister_class(vf_editor.calc_vectorfieldvelocities)
 	bpy.utils.unregister_class(vf_editor.create_vectorfield)

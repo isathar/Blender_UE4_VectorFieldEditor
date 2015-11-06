@@ -29,6 +29,9 @@ def build_vectorfield(context):
 	yval = int(densityVal[1])
 	zval = int(densityVal[2])
 	
+	vf_startlocs = []
+	vf_velocities = []
+	
 	#import timeit
 	#start = timeit.default_timer()
 	
@@ -39,30 +42,30 @@ def build_vectorfield(context):
 	# create the volume
 	bpy.ops.mesh.primitive_plane_add(location=(0.0,0.0,0.0))
 	
-	context.active_object.name = 'VF_Volume_' + str(volcount)
-	parentObj = context.active_object
+	volMesh = context.active_object
+	volMesh.name = 'VF_Volume_' + str(volcount)
 	
 	bpy.ops.object.mode_set(mode='EDIT')
 	bpy.ops.mesh.delete(type='VERT')
 	bpy.ops.object.mode_set(mode='OBJECT')
 	
 	bpy.ops.object.particle_system_add()
-	psettings = context.active_object.particle_systems[0].settings
+	psettings = volMesh.particle_systems[0].settings
 	
-	me = context.active_object.data
+	me = volMesh.data
 	me.update()
 	me.vertices.add(totalvertscount)
 	
 	meshverts = [v for v in me.vertices]
 	
-	context.active_object.vf_object_density[0] = xval
-	context.active_object.vf_object_density[1] = yval
-	context.active_object.vf_object_density[2] = zval
+	volMesh.vf_object_density[0] = xval
+	volMesh.vf_object_density[1] = yval
+	volMesh.vf_object_density[2] = zval
 	
-	context.active_object.vf_object_scale = scaleVal
+	volMesh.vf_object_scale = scaleVal
 	
-	vf_vdata.particle_velocitieslist.clear()
-	vf_vdata.particle_startlocs.clear()
+	#vf_vdata.particle_velocitieslist.clear()
+	#vf_vdata.particle_startlocs.clear()
 	
 	zeroVect = Vector([0.0,0.0,0.0])
 	
@@ -78,8 +81,10 @@ def build_vectorfield(context):
 					)
 				)
 				meshverts[counter].co = tempV
-				vf_vdata.particle_velocitieslist.append(zeroVect)
-				vf_vdata.particle_startlocs.append(tempV)
+				vf_startlocs.append(tempV)
+				vf_velocities.append(zeroVect)
+				#vf_vdata.particle_velocitieslist.append(zeroVect)
+				#vf_vdata.particle_startlocs.append(tempV)
 				
 				counter += 1
 	
@@ -100,8 +105,6 @@ def build_vectorfield(context):
 	if context.window_manager.vf_disablegravity:
 		psettings.effector_weights.gravity = 0.0
 	
-	volMesh = context.active_object
-	
 	# create the bounding box
 	bpy.ops.mesh.primitive_cube_add(location=(0.0,0.0,0.0))
 	context.active_object.name = 'VF_Bounds_' + str(volcount)
@@ -119,7 +122,18 @@ def build_vectorfield(context):
 	
 	volMesh.parent = context.active_object
 	
-	save_velobjectdata(volMesh)
+	for v in vf_velocities:
+		tempvertdata = volMesh.custom_vectorfield.add()
+		tempvertdata.vvelocity = v
+	
+	del vf_velocities[:]
+	
+	for v in vf_startlocs:
+		tempvertdata = volMesh.custom_vf_startlocs.add()
+		tempvertdata.vvelocity = v
+	
+	del vf_startlocs[:]
+	
 	
 	#stop = timeit.default_timer()
 	#print (stop - start)
@@ -159,30 +173,36 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 		
 		useselection = context.window_manager.pvelocity_selection
 		
-		me = context.active_object.data
-		me.update()
-		
 		particleslist = []
+		
+		volmesh = context.active_object
+		
+		vf_velocities = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+		
+		me = volmesh.data
+		me.update()
 		
 		## Get velocities
 		if context.window_manager.pvelocity_veltype == "VECT":
 			tempvect = Vector(context.window_manager.pvelocity_dirvector)
-			particleslist = [tempvect for p in context.active_object.particle_systems[0].particles]
+			particleslist = [tempvect for p in volmesh.particle_systems[0].particles]
 		elif context.window_manager.pvelocity_veltype == "DIST":
-			tplist = context.active_object.particle_systems[0].particles
-			particleslist = [(tplist[i].location - vf_vdata.particle_startlocs[i]) for i in range(len(tplist))]
+			vf_startlocs = [Vector(v.vvelocity) for v in volmesh.custom_vf_startlocs]
+			tplist = volmesh.particle_systems[0].particles
+			particleslist = [(tplist[i].location - vf_startlocs[i]) for i in range(len(tplist))]
+			del vf_startlocs[:]
 		elif context.window_manager.pvelocity_veltype == "ANGVEL":
-			particleslist = [p.angular_velocity for p in context.active_object.particle_systems[0].particles]
+			particleslist = [p.angular_velocity for p in volmesh.particle_systems[0].particles]
 		elif context.window_manager.pvelocity_veltype == "PNT":
 			cursorloc = context.scene.cursor_location
 			particleslist = [(v.co - cursorloc).normalized() for v in me.vertices]
 		else:
-			particleslist = [p.velocity for p in context.active_object.particle_systems[0].particles]
+			particleslist = [p.velocity for p in volmesh.particle_systems[0].particles]
 		
 		mvertslist = []
 		if useselection:
 			mvertslist = [v.select for v in me.vertices]
-		
+				
 		
 		## Blend with List / calculate
 		
@@ -191,17 +211,17 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			if useselection:
 				for i in range(len(particleslist)):
 					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = Vector(
-							(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
-							vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
-							vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+						vf_velocities[i] = Vector(
+							(vf_velocities[i][0] * (particleslist[i][0] * invmult), 
+							vf_velocities[i][1] * (particleslist[i][1] * invmult), 
+							vf_velocities[i][2] * (particleslist[i][2] * invmult))
 						)
 			else:
 				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = Vector(
-						(vf_vdata.particle_velocitieslist[i][0] * (particleslist[i][0] * invmult), 
-						vf_vdata.particle_velocitieslist[i][1] * (particleslist[i][1] * invmult), 
-						vf_vdata.particle_velocitieslist[i][2] * (particleslist[i][2] * invmult))
+					vf_velocities[i] = Vector(
+						(vf_velocities[i][0] * (particleslist[i][0] * invmult), 
+						vf_velocities[i][1] * (particleslist[i][1] * invmult), 
+						vf_velocities[i][2] * (particleslist[i][2] * invmult))
 					)
 			
 		# add
@@ -209,10 +229,10 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			if useselection:
 				for i in range(len(particleslist)):
 					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
+						vf_velocities[i] = vf_velocities[i] + ((particleslist[i]) * invmult)
 			else:
 				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] + ((particleslist[i]) * invmult)
+					vf_velocities[i] = vf_velocities[i] + ((particleslist[i]) * invmult)
 			
 		# average
 		elif context.window_manager.pvelocity_genmode == 'AVG':
@@ -220,23 +240,28 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			if useselection:
 				for i in range(len(particleslist)):
 					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = ((vf_vdata.particle_velocitieslist[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
+						vf_velocities[i] = ((vf_velocities[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
 			else:
 				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = ((vf_vdata.particle_velocitieslist[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
+					vf_velocities[i] = ((vf_velocities[i] * (1.0 - avgratio)) + ((particleslist[i] * invmult) * avgratio))
 			
 		# replace
 		elif context.window_manager.pvelocity_genmode == 'REP':
 			if useselection:
 				for i in range(len(particleslist)):
 					if mvertslist[i]:
-						vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
+						vf_velocities[i] = particleslist[i] * invmult
 			else:
 				for i in range(len(particleslist)):
-					vf_vdata.particle_velocitieslist[i] = particleslist[i] * invmult
+					vf_velocities[i] = particleslist[i] * invmult
 		
 		
-		save_velobjectdata(context.active_object)
+		volmesh.custom_vectorfield.clear()
+		for v in vf_velocities:
+			tempvertdata = volmesh.custom_vectorfield.add()
+			tempvertdata.vvelocity = v.copy()
+		
+		del vf_velocities[:]
 		
 		return {'FINISHED'}
 
@@ -253,8 +278,13 @@ class vf_normalizevelocities(bpy.types.Operator):
 		return context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
-		for i in range(len(vf_vdata.particle_velocitieslist)):
-			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i].normalized()
+		volmesh = context.active_object
+		
+		vf_velocities = [Vector(v.vvelocity).normalized() for v in volmesh.custom_vectorfield]
+		volmesh.custom_vectorfield.clear()
+		for v in vf_velocities:
+			tempvertdata = volmesh.custom_vectorfield.add()
+			tempvertdata.vvelocity = v.copy()
 		
 		return {'FINISHED'}
 
@@ -270,8 +300,13 @@ class vf_invertvelocities(bpy.types.Operator):
 		return context.active_object != None and 'VF_Volume_' in context.active_object.name
 	
 	def execute(self, context):
-		for i in range(len(vf_vdata.particle_velocitieslist)):
-			vf_vdata.particle_velocitieslist[i] = vf_vdata.particle_velocitieslist[i] * -1.0
+		volmesh = context.active_object
+		
+		vf_velocities = [(Vector(v.vvelocity) * -1.0) for v in volmesh.custom_vectorfield]
+		volmesh.custom_vectorfield.clear()
+		for v in vf_velocities:
+			tempvertdata = volmesh.custom_vectorfield.add()
+			tempvertdata.vvelocity = v.copy()
 		return {'FINISHED'}
 
 
@@ -435,8 +470,15 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 		return {"PASS_THROUGH"}
 
 	def invoke(self, context, event):
+		print ("test")
 		if context.area.type == "VIEW_3D":
 			if context.window_manager.vf_showingvelocitylines < 1:
+				volmesh = context.active_object
+				vf_vdata.particle_velocitieslist.clear()
+				vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+				vf_vdata.particle_startlocs.clear()
+				vf_vdata.particle_startlocs = [Vector(v.vvelocity) for v in volmesh.custom_vf_startlocs]
+				
 				context.window_manager.vf_showingvelocitylines = 1
 				self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_vectorfield,
 					(self, context), 'WINDOW', 'POST_VIEW')
@@ -445,18 +487,12 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 				return {"RUNNING_MODAL"}
 			else:
 				context.window_manager.vf_showingvelocitylines = -1
+				vf_vdata.particle_velocitieslist.clear()
+				vf_vdata.particle_startlocs.clear()
 				return {'RUNNING_MODAL'}
 		else:
 			self.report({"WARNING"}, "View3D not found, can't run operator")
 			return {"CANCELLED"}
-
-
-# draw single gl line
-def draw_line(vertexloc, vertexnorm):
-	bgl.glBegin(bgl.GL_LINES)
-	bgl.glVertex3f(vertexloc[0],vertexloc[1],vertexloc[2])
-	bgl.glVertex3f(vertexnorm[0] + vertexloc[0],vertexnorm[1] + vertexloc[1],vertexnorm[2] + vertexloc[2])
-	bgl.glEnd()
 
 
 # iterate through list to draw each line
@@ -465,66 +501,12 @@ def draw_vectorfield(self, context):
 	bgl.glColor3f(0.0,1.0,0.0)
 	
 	for i in range(len(vf_vdata.particle_velocitieslist)):
-		draw_line(vf_vdata.particle_startlocs[i],vf_vdata.particle_velocitieslist[i])
+		bgl.glBegin(bgl.GL_LINES)
+		bgl.glVertex3f(vf_vdata.particle_startlocs[i][0],vf_vdata.particle_startlocs[i][1],vf_vdata.particle_startlocs[i][2])
+		bgl.glVertex3f(vf_vdata.particle_velocitieslist[i][0] + vf_vdata.particle_startlocs[i][0],vf_vdata.particle_velocitieslist[i][1] + vf_vdata.particle_startlocs[i][1],vf_vdata.particle_velocitieslist[i][2] + vf_vdata.particle_startlocs[i][2])
+		bgl.glEnd()
 	
 	bgl.glDisable(bgl.GL_BLEND)
-
-
-class update_vfdispoffsets(bpy.types.Operator):
-	bl_idname = "view3d.update_vfdispoffsets"
-	bl_label = 'Update Offsets'
-	bl_description = 'Update location offsets in saved data to match volume bounds offset'
-	
-	@classmethod
-	def poll(cls, context):
-		return context.mode == "OBJECT" and context.active_object != None and 'VF_Volume_' in context.active_object.name
-	
-	def execute(self, context):
-		me = context.active_object.data
-		me.update()
-		
-		meshverts = [v.co for v in me.vertices]
-		volmesh = context.active_object.parent
-		
-		for i in range(len(meshverts)):
-			vf_vdata.particle_startlocs[i] = Vector(meshverts[i] + volmesh.location)
-		
-		return {'FINISHED'}
-
-
-class update_vfeditorvars(bpy.types.Operator):
-	bl_idname = "view3d.update_vfeditorvars"
-	bl_label = 'Update Editor Data'
-	bl_description = 'Updates data used by editor. (use if current data is not synced with selected volume)'
-	
-	@classmethod
-	def poll(cls, context):
-		return context.mode == "OBJECT" and context.active_object != None and 'VF_Volume_' in context.active_object.name
-	
-	def execute(self, context):
-		me = context.active_object.data
-		me.update()
-		meshverts = [v.co for v in me.vertices]
-		
-		volmesh = context.active_object.parent
-		
-		vf_vdata.particle_velocitieslist.clear()
-		vf_vdata.particle_startlocs.clear()
-		
-		for i in range(len(context.active_object.custom_vectorfield)):
-			vf_vdata.particle_velocitieslist.append(Vector(context.active_object.custom_vectorfield[i].vvelocity))
-			vf_vdata.particle_startlocs.append(Vector(meshverts[i] + volmesh.location))
-		
-		return {'FINISHED'}
-
-def save_velobjectdata(volmesh):
-	if 'custom_vectorfield' not in volmesh:
-		volmesh['custom_vectorfield'] = []
-	
-	volmesh.custom_vectorfield.clear()
-	for v in vf_vdata.particle_velocitieslist:
-		tempvertdata = volmesh.custom_vectorfield.add()
-		tempvertdata.vvelocity = v
 
 
 ### Import
@@ -537,8 +519,6 @@ def build_importedVectorField(tempvelList, tempOffset):
 	# copy imported velocities
 	for i in range(len(tempvelList)):
 		volmesh.custom_vectorfield[i].vvelocity = tempvelList[i]
-		vf_vdata.particle_velocitieslist[i] = tempvelList[i]
-		vf_vdata.particle_startlocs[i] = vf_vdata.particle_startlocs[i] + tempOffset
 	
 	volmesh.parent.location = volmesh.parent.location + tempOffset
 

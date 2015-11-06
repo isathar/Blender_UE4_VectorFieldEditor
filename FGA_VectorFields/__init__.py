@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 1, 2),
+	"version": (1, 1, 3),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -37,9 +37,7 @@ class vectorfieldtools_panel(bpy.types.Panel):
 
 	def draw(self, context):
 		layout = self.layout
-		
-		layout.row().operator('view3d.update_vfeditorvars', text='Update Data')
-		
+				
 		# Create
 		box = layout.box()
 		box.prop(context.window_manager, 'show_createpanel', toggle=True, text="Create")
@@ -91,7 +89,6 @@ class vectorfieldtools_panel(bpy.types.Panel):
 				box.row().operator('view3d.toggle_vectorfieldvelocities', text='Show')
 			else:
 				box.row().operator('view3d.toggle_vectorfieldvelocities', text='Hide')
-			box.row().operator('view3d.update_vfdispoffsets', text='Update Offsets')
 		
 		# Tools:
 		box = layout.box()
@@ -340,6 +337,7 @@ def importmenu_func(self, context):
 
 def initdefaults():
 	bpy.types.Object.custom_vectorfield = bpy.props.CollectionProperty(type=vector_field)
+	bpy.types.Object.custom_vf_startlocs = bpy.props.CollectionProperty(type=vector_field)
 	bpy.types.Object.vf_object_density = bpy.props.IntVectorProperty(default=(0,0,0))
 	bpy.types.Object.vf_object_scale = bpy.props.FloatVectorProperty(default=(1.0,1.0,1.0))
 	
@@ -468,8 +466,6 @@ def register():
 	bpy.utils.register_class(vf_editor.toggle_vectorfieldvelocities)
 	bpy.utils.register_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.register_class(vf_editor.vf_invertvelocities)
-	bpy.utils.register_class(vf_editor.update_vfdispoffsets)
-	bpy.utils.register_class(vf_editor.update_vfeditorvars)
 	
 	bpy.utils.register_class(export_vectorfieldfile)
 	bpy.utils.register_class(import_vectorfieldfile)
@@ -499,8 +495,6 @@ def unregister():
 	bpy.utils.unregister_class(vf_editor.toggle_vectorfieldvelocities)
 	bpy.utils.unregister_class(vf_editor.vf_normalizevelocities)
 	bpy.utils.unregister_class(vf_editor.vf_invertvelocities)
-	bpy.utils.unregister_class(vf_editor.update_vfdispoffsets)
-	bpy.utils.unregister_class(vf_editor.update_vfeditorvars)
 	
 	bpy.utils.unregister_class(export_vectorfieldfile)
 	bpy.utils.unregister_class(import_vectorfieldfile)

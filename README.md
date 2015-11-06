@@ -19,7 +19,7 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
  
 **Vector Field Editor:**
 - Saves current particle system velocities and blends them with saved results using one of the following methods:
-  - *Replace, Average, Add, Multiply*
+  - *Replace, Average, Add, Multiply, Cross Product, Vector Reflection*
 - Particle velocities used in these calculations can be obtained using the following methods:
   - *Velocity, Offset Distance, Angular Velocity, Custom Vector, Point*
 - Curve Force tool that uses wind forces to move particles along a line. 
@@ -61,18 +61,31 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
   
 ## Changelog:  
   
-- ***v1.1.2*** (current):  
-   - added support for selecting a physics preset to edit particle physics settings easily for selected vector field
-   - new presets can be added/removed
-   - export should now work with any part of the vector field selected (or both)
+- ***1.1.5*** (current):
+  - changed sorting of the calculation/velocity dropdown lists
+  - new calculation method: Vector Reflection  
+  
+- ***1.1.4***:
+  - fix for display lines not updating when new velocities are calculated
+  - new calculation method: Cross Product  
+  
+- ***1.1.3***:
+  - removed the need for the update data/offsets buttons
+  - slight performance optimizations for display lines  
+  
+- ***1.1.2***:
+  - new presets can now be added/removed
+  - export should now work with any part of the vector field selected (or both)  
+  
+- ***1.1.0***:
+  - added support for selecting a physics preset to edit particle physics settings easily for selected vector field
    
-- ***v1.0.1*** (current):  
+- ***1.0.1***:
   - renamed curve path tool to Wind Curve Force
   - added editor for created curve wind force strength, distance + falloff
   - the Ratio property should now work (apparently forgot to use the variable)  
   
-  
-- ***v1.0.0***:
+- ***1.0.0***:
   - *General:*
     - tools panel category renamed to *Vector Fields*
     - saved data only includes velocities now (removed position, index)
@@ -94,10 +107,9 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
     - changed curve force tool to create an object group to remove scene outliner clutter
     - fixed curve force fields' parenting issue
       - all transformations to the curve force object should now work
-    - curve forces now display an arrow pointing in the force's direction 
-
-
-- v0.9.5:
+    - curve forces now display an arrow pointing in the force's direction  
+  
+- ***0.9.5***:
   - *Editor:*
     - added new calculation method: Multiply
     - added different methods for obtaining velocities
@@ -119,20 +131,20 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
     - description text for all variables + operators (some may be vague)
     - added bug reporting url to addon manager (Github)
     - readme formatting  
-
-- v0.9.1
+  
+- ***0.9.1***:
   - added different generation modes: *Replace, Additive, Average*
   - added trail option for curve path (fade influence with curve position)
   - changed the way invert and normalize work
-  - slight calculation performance tweak
-
--v0.9
+  - slight calculation performance tweak  
+  
+- ***0.9***:
   - another performance tweak
   - added invert, normalize, disable gravity options  
-
--v0.8 
+  
+- ***0.8***:
   - added import functionality
   - massive speed improvement  
-
--v0.5 
+  
+- ***0.5***:
   - initial upload  

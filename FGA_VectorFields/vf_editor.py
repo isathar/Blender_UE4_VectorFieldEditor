@@ -264,6 +264,16 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			else:
 				for i in range(len(particleslist)):
 					vf_velocities[i] = vf_velocities[i].cross(particleslist[i])
+			
+		# reflection
+		elif context.window_manager.pvelocity_genmode == 'REF':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_velocities[i] = vf_velocities[i].reflect(particleslist[i])
+			else:
+				for i in range(len(particleslist)):
+					vf_velocities[i] = vf_velocities[i].reflect(particleslist[i])
 		
 		
 		volmesh.custom_vectorfield.clear()

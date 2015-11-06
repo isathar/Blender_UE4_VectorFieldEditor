@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 1, 4),
+	"version": (1, 1, 5),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -356,9 +356,9 @@ def initdefaults():
 	# calculate/edit
 	bpy.types.WindowManager.pvelocity_veltype = bpy.props.EnumProperty(
 		name="Velocity Type",
-		items=(('PNT', "Point", "Get a direction vector pointing away from 3D cursor"),
-			   ('VECT', "Custom Vector", "Use direction vector as velocities"),
+		items=(('VECT', "Custom Vector", "Use direction vector as velocities"),
 			   ('ANGVEL', "Angular Velocity", "Get particles' current angular velocities (spin)"),
+			   ('PNT', "Point", "Get a direction vector pointing away from 3D cursor"),
 			   ('DIST', "Distance", "Get particles' offsets from their initial locations"),
 			   ('PVEL', "Velocity", "Get particles' current velocities"),
 			   ),
@@ -367,11 +367,12 @@ def initdefaults():
 	)
 	bpy.types.WindowManager.pvelocity_genmode = bpy.props.EnumProperty(
 		name="Calculation Method",
-		items=(('MULT', "Multiply", "Multiply current velocities with old velocities"),
-			   ('ADD', "Add", "Add new velocities to existing ones"),
+		items=(('REF', "Reflection", "Get the reflection vector between old and new velocities"),
+			   ('CRS', "Cross Product", "Get the cross product of old and current velocities"),
 			   ('AVG', "Average", "Get the average of old and new velocities"),
+			   ('MULT', "Multiply", "Multiply current velocities with old velocities"),
+			   ('ADD', "Add", "Add new velocities to existing ones"),
 			   ('REP', "Replace", "Default - Overwrite old velocities"),
-			   ('CRS', "Cross", "Get the cross product of old and current velocities"),
 			   ),
 		default='REP',
 		description="Method of combining current and saved velocities",

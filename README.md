@@ -6,7 +6,8 @@ Allows creation and manipulation of vector fields using Blender particle simulat
 ------------------------------------------------------------------------------------------------------- 
  
 **New Documentation is available here**: https://github.com/isathar/Blender_UE4_VectorFieldEditor/wiki (or the wiki link on the side) 
-- Still wip, but almost finished. 
+- Currently a little bit out of date, will be updated soon.
+
   
 Example .blend file with a few different vector fields available here: http://www.mediafire.com/download/6t00h4g25ikxq5i/VF_Examples.blend  
   

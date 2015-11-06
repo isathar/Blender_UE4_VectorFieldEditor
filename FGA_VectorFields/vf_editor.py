@@ -202,7 +202,7 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 		mvertslist = []
 		if useselection:
 			mvertslist = [v.select for v in me.vertices]
-				
+			
 		
 		## Blend with List / calculate
 		
@@ -276,15 +276,19 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 					vf_velocities[i] = vf_velocities[i].reflect(particleslist[i])
 		
 		
+		# write new velocities
 		volmesh.custom_vectorfield.clear()
 		for v in vf_velocities:
 			tempvertdata = volmesh.custom_vectorfield.add()
 			tempvertdata.vvelocity = v.copy()
 		
+		# update display if needed
 		if context.window_manager.vf_showingvelocitylines > -1:
 			vf_vdata.particle_velocitieslist.clear()
 			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
 		
+		
+		del particleslist[:]
 		del vf_velocities[:]
 		
 		return {'FINISHED'}
@@ -303,12 +307,18 @@ class vf_normalizevelocities(bpy.types.Operator):
 	
 	def execute(self, context):
 		volmesh = context.active_object
-		
 		vf_velocities = [Vector(v.vvelocity).normalized() for v in volmesh.custom_vectorfield]
 		volmesh.custom_vectorfield.clear()
+		
 		for v in vf_velocities:
 			tempvertdata = volmesh.custom_vectorfield.add()
 			tempvertdata.vvelocity = v.copy()
+		
+		if context.window_manager.vf_showingvelocitylines > -1:
+			vf_vdata.particle_velocitieslist.clear()
+			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+		
+		del vf_velocities[:]
 		
 		return {'FINISHED'}
 
@@ -325,12 +335,19 @@ class vf_invertvelocities(bpy.types.Operator):
 	
 	def execute(self, context):
 		volmesh = context.active_object
-		
 		vf_velocities = [(Vector(v.vvelocity) * -1.0) for v in volmesh.custom_vectorfield]
 		volmesh.custom_vectorfield.clear()
+		
 		for v in vf_velocities:
 			tempvertdata = volmesh.custom_vectorfield.add()
 			tempvertdata.vvelocity = v.copy()
+		
+		if context.window_manager.vf_showingvelocitylines > -1:
+			vf_vdata.particle_velocitieslist.clear()
+			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+		
+		del vf_velocities[:]
+		
 		return {'FINISHED'}
 
 

@@ -254,12 +254,26 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			else:
 				for i in range(len(particleslist)):
 					vf_velocities[i] = particleslist[i] * invmult
+			
+		# cross product
+		elif context.window_manager.pvelocity_genmode == 'CRS':
+			if useselection:
+				for i in range(len(particleslist)):
+					if mvertslist[i]:
+						vf_velocities[i] = vf_velocities[i].cross(particleslist[i])
+			else:
+				for i in range(len(particleslist)):
+					vf_velocities[i] = vf_velocities[i].cross(particleslist[i])
 		
 		
 		volmesh.custom_vectorfield.clear()
 		for v in vf_velocities:
 			tempvertdata = volmesh.custom_vectorfield.add()
 			tempvertdata.vvelocity = v.copy()
+		
+		if context.window_manager.vf_showingvelocitylines > -1:
+			vf_vdata.particle_velocitieslist.clear()
+			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
 		
 		del vf_velocities[:]
 		

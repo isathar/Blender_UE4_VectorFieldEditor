@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "FGA Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 1, 3),
+	"version": (1, 1, 4),
 	"blender": (2, 70, 0),
 	"location": "View3D > Toolbar",
 	"description": " Allows creation and manipulation of vector fields using Blender particle simulations, "
@@ -371,6 +371,7 @@ def initdefaults():
 			   ('ADD', "Add", "Add new velocities to existing ones"),
 			   ('AVG', "Average", "Get the average of old and new velocities"),
 			   ('REP', "Replace", "Default - Overwrite old velocities"),
+			   ('CRS', "Cross", "Get the cross product of old and current velocities"),
 			   ),
 		default='REP',
 		description="Method of combining current and saved velocities",

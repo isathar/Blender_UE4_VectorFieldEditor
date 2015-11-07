@@ -33,7 +33,7 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
  
 - Extract to your addons directory
 - Enable it in the addon manager (named *FGA Vector Field Tools*)
-- A new section called *Vector Fields* should be available in the tools panel 
+- A new tab named *Particle Simulation* should be available in the tools panel with a panel named Vector Fields  
  
 --------------------------------------------------------------------------------------------------------- 
  

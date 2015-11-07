@@ -134,6 +134,9 @@ def build_vectorfield(context):
 	
 	del vf_startlocs[:]
 	
+	tempconstraint = volMesh.constraints.new(type='COPY_TRANSFORMS')
+	tempconstraint.target = volMesh.parent
+	
 	
 	#stop = timeit.default_timer()
 	#print (stop - start)
@@ -286,6 +289,9 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 		if context.window_manager.vf_showingvelocitylines > -1:
 			vf_vdata.particle_velocitieslist.clear()
 			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+			vf_vdata.particle_startlocs.clear()
+			temploc = volmesh.parent.location
+			vf_vdata.particle_startlocs = [(Vector(v.vvelocity) + temploc) for v in volmesh.custom_vf_startlocs]
 		
 		
 		del particleslist[:]
@@ -317,6 +323,9 @@ class vf_normalizevelocities(bpy.types.Operator):
 		if context.window_manager.vf_showingvelocitylines > -1:
 			vf_vdata.particle_velocitieslist.clear()
 			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+			vf_vdata.particle_startlocs.clear()
+			temploc = volmesh.parent.location
+			vf_vdata.particle_startlocs = [(Vector(v.vvelocity) + temploc) for v in volmesh.custom_vf_startlocs]
 		
 		del vf_velocities[:]
 		
@@ -345,6 +354,9 @@ class vf_invertvelocities(bpy.types.Operator):
 		if context.window_manager.vf_showingvelocitylines > -1:
 			vf_vdata.particle_velocitieslist.clear()
 			vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
+			vf_vdata.particle_startlocs.clear()
+			temploc = volmesh.parent.location
+			vf_vdata.particle_startlocs = [(Vector(v.vvelocity) + temploc) for v in volmesh.custom_vf_startlocs]
 		
 		del vf_velocities[:]
 		
@@ -439,6 +451,7 @@ class calc_curvewindforce(bpy.types.Operator):
 				context.active_object.matrix_world = mat_world
 			
 			context.active_object.parent = parentobj
+			
 		
 		return {'FINISHED'}
 
@@ -518,7 +531,8 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 				vf_vdata.particle_velocitieslist.clear()
 				vf_vdata.particle_velocitieslist = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
 				vf_vdata.particle_startlocs.clear()
-				vf_vdata.particle_startlocs = [Vector(v.vvelocity) for v in volmesh.custom_vf_startlocs]
+				temploc = volmesh.parent.location
+				vf_vdata.particle_startlocs = [(Vector(v.vvelocity) + temploc) for v in volmesh.custom_vf_startlocs]
 				
 				context.window_manager.vf_showingvelocitylines = 1
 				self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_vectorfield,

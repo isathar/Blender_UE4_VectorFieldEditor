@@ -62,90 +62,91 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
   
 ## Changelog:  
   
-- ***1.1.5*** (current):
-  - changed sorting of the calculation/velocity dropdown lists
-  - new calculation method: Vector Reflection  
-  
-- ***1.1.4***:
-  - fix for display lines not updating when new velocities are calculated
-  - new calculation method: Cross Product  
-  
-- ***1.1.3***:
-  - removed the need for the update data/offsets buttons
-  - slight performance optimizations for display lines  
-  
-- ***1.1.2***:
-  - new presets can now be added/removed
-  - export should now work with any part of the vector field selected (or both)  
-  
-- ***1.1.0***:
-  - added support for selecting a physics preset to edit particle physics settings easily for selected vector field
-   
-- ***1.0.1***:
-  - renamed curve path tool to Wind Curve Force
-  - added editor for created curve wind force strength, distance + falloff
-  - the Ratio property should now work (apparently forgot to use the variable)  
-  
-- ***1.0.0***:
-  - *General:*
-    - tools panel category renamed to *Vector Fields*
-    - saved data only includes velocities now (removed position, index)
-      - files made with old versions are still compatible
-    - cleaned up ui panel to reduce clutter, added section toggles
-    - some code cleanup
-  - *Import/Export:*
-    - moved import/export to standard menu
-    - made import/export properties local to their functions
-  - *Editor:*
-    - performance tweaks for creating new vector fields + calculating velocities
-    - removed slice selection tool (redundant, easily done in edit mode)
-    - matched default scaling to (grid units x field density)
-      - distances were at half scale before
-      - density variable used for creation is now distance between particles
-    - added undo functionality to *Generate* function
-    - new velocity mode: Point
-  - *Curve Force Tool:*
-    - changed curve force tool to create an object group to remove scene outliner clutter
-    - fixed curve force fields' parenting issue
-      - all transformations to the curve force object should now work
-    - curve forces now display an arrow pointing in the force's direction  
-  
-- ***0.9.5***:
-  - *Editor:*
-    - added new calculation method: Multiply
-    - added different methods for obtaining velocities
-    - reorganized the main editor
-    - added calculate for selection
-    - added invert all button
-	- seperated normalize function from calculation - it's a button again
-  - *Import/Export:*
-    - moved density variable to object space for export script 
-      - allows multiple vector fields in the scene during export (still exports one at a time)
-    - added ability to use object locations as offsets + import/export them
-    - scaling tweaks
-	- manual bounds option
-  - *General:*
-    - added ability to undo slice selection, calculation, curve tool, and normalize
-    - select x,y,z slice
-    - created index by axis for velocities list for slice selection and upcoming features
-    - switched bpy.context to passed context where possible
-    - description text for all variables + operators (some may be vague)
-    - added bug reporting url to addon manager (Github)
-    - readme formatting  
-  
-- ***0.9.1***:
-  - added different generation modes: *Replace, Additive, Average*
-  - added trail option for curve path (fade influence with curve position)
-  - changed the way invert and normalize work
-  - slight calculation performance tweak  
-  
-- ***0.9***:
-  - another performance tweak
-  - added invert, normalize, disable gravity options  
-  
-- ***0.8***:
-  - added import functionality
-  - massive speed improvement  
-  
-- ***0.5***:
-  - initial upload  
+***1.1.5*** (current):
+- changed sorting of the calculation/velocity dropdown lists
+- new calculation method: Vector Reflection
+- added constraint to vector field volume, only moving the bounding box now moves the volume  
+
+***1.1.4***:
+- fix for display lines not updating when new velocities are calculated
+- new calculation method: Cross Product  
+
+***1.1.3***:
+- removed the need for the update data/offsets buttons
+- slight performance optimizations for display lines  
+
+***1.1.2***:
+- new presets can now be added/removed
+- export should now work with any part of the vector field selected (or both)  
+
+***1.1.0***:
+- added support for selecting a physics preset to edit particle physics settings easily for selected vector field
+
+***1.0.1***:
+- renamed curve path tool to Wind Curve Force
+- added editor for created curve wind force strength, distance + falloff
+- the Ratio property should now work (apparently forgot to use the variable)  
+
+***1.0.0***:
+- *General:*
+  - tools panel category renamed to *Vector Fields*
+  - saved data only includes velocities now (removed position, index)
+    - files made with old versions are still compatible
+  - cleaned up ui panel to reduce clutter, added section toggles
+  - some code cleanup
+- *Import/Export:*
+  - moved import/export to standard menu
+  - made import/export properties local to their functions
+- *Editor:*
+  - performance tweaks for creating new vector fields + calculating velocities
+  - removed slice selection tool (redundant, easily done in edit mode)
+  - matched default scaling to (grid units x field density)
+    - distances were at half scale before
+    - density variable used for creation is now distance between particles
+  - added undo functionality to *Generate* function
+  - new velocity mode: Point
+- *Curve Force Tool:*
+  - changed curve force tool to create an object group to remove scene outliner clutter
+  - fixed curve force fields' parenting issue
+    - all transformations to the curve force object should now work
+  - curve forces now display an arrow pointing in the force's direction  
+
+***0.9.5***:
+- *Editor:*
+  - added new calculation method: Multiply
+  - added different methods for obtaining velocities
+  - reorganized the main editor
+  - added calculate for selection
+  - added invert all button
+  - seperated normalize function from calculation - it's a button again
+- *Import/Export:*
+  - moved density variable to object space for export script 
+    - allows multiple vector fields in the scene during export (still exports one at a time)
+  - added ability to use object locations as offsets + import/export them
+  - scaling tweaks
+  - manual bounds option
+- *General:*
+  - added ability to undo slice selection, calculation, curve tool, and normalize
+  - select x,y,z slice
+  - created index by axis for velocities list for slice selection and upcoming features
+  - switched bpy.context to passed context where possible
+  - description text for all variables + operators (some may be vague)
+  - added bug reporting url to addon manager (Github)
+  - readme formatting  
+
+***0.9.1***:
+- added different generation modes: *Replace, Additive, Average*
+- added trail option for curve path (fade influence with curve position)
+- changed the way invert and normalize work
+- slight calculation performance tweak  
+
+***0.9***:
+- another performance tweak
+- added invert, normalize, disable gravity options  
+
+***0.8***:
+- added import functionality
+- massive speed improvement  
+
+***0.5***:
+- initial upload  

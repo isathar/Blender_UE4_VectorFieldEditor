@@ -660,7 +660,7 @@ def write_fgafile(self, exportvol):
 	fw = file.write
 	
 	# Resolution:
-	fw("%f,%f,%f," % (tempDensity[0],tempDensity[1],tempDensity[2]))
+	fw("%i,%i,%i," % (tempDensity[0],tempDensity[1],tempDensity[2]))
 	
 	# Minimum/Maximum Bounds:
 	if self.exportvf_allowmanualbounds:

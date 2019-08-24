@@ -1,12 +1,12 @@
 Blender - FGA Vector Field Editor
 =======================================
 
-Allows creation and manipulation of vector fields using Blender particle simulations and vector math operations, as well as import/export of the FGA file format used in Unreal Engine 4. 
+Allows creation and manipulation of vector fields using Blender particle simulations and vector math operations, as well as importing/exporting FGA files used by Unreal Engine 4. 
 
 
 Requires Blender 2.8.
 
-The menu is in an inconvenient place at the moment since this is just a quick update to get it working on Blender 2.8. You'll need to resize the toolbar to see all the opions.
+The menu is in an inconvenient place at the moment since this is just a quick update to get it working on Blender 2.8. You'll need to resize the toolbar to see all the options.
 
   
 ------------------------------------------------------------------------------------------------------- 

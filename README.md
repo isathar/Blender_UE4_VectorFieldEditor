@@ -1,22 +1,23 @@
-Blender - UE4 - FGA Vector Field Editor
+Blender - FGA Vector Field Editor
 =======================================
 
 Allows creation and manipulation of vector fields using Blender particle simulations and vector math operations, as well as import/export of the FGA file format used in Unreal Engine 4. 
 
 
-Only works on Blender versions up to 2.79. It needs to be updated to work on v2.8.
+Requires Blender 2.8.
+
+The menu is in an inconvenient place at the moment since this is just a quick update to get it working on Blender 2.8. You'll need to resize the toolbar to see all the opions.
+
   
 ------------------------------------------------------------------------------------------------------- 
  
 **New Documentation is available here**: https://github.com/isathar/Blender_UE4_VectorFieldEditor/wiki (or the wiki link on the side) 
-- Currently a little bit out of date, will be updated soon.
+- Very out of date, will be updated as soon as time permits.
 
+ 
+Some example .fga files: http://www.mediafire.com/download/4x174fgf8lmec6g/VF_Examples.zip  
   
-Example .blend file with a few different vector fields available here: http://www.mediafire.com/download/6t00h4g25ikxq5i/VF_Examples.blend  
-  
-Archive with some .fga files exported from the above: http://www.mediafire.com/download/4x174fgf8lmec6g/VF_Examples.zip  
-  
-  
+ 
 ------------------------------------------------------------------------------------------------------- 
  
 ## Features  
@@ -36,31 +37,26 @@ Archive with some .fga files exported from the above: http://www.mediafire.com/d
  
 - Extract to your addons directory
 - Enable it in the addon manager (named *FGA Vector Field Tools*)
-- A new tab named *Particle Simulation* should be available in the tools panel with a panel named Vector Fields  
+- A new tab named *Vector Fields* should be visible in the tools panel
  
 --------------------------------------------------------------------------------------------------------- 
  
 ## Notes  
  
 ###### Performance  
+- This addon's performance is heavily dependent on the speed of your CPU and memory.
 - Blender may stop responding during the Create and Calculate operations, but shouldn't crash.
 - On vector fields with a density of less than 128^3, operations should take less than a minute, with lower density fields (<64^3) taking a few seconds at most.
 - At maximum density (128^3), creating a new vector field takes about 20 seconds on my mid-range Core i5 based PC, and calculating velocities can take up to 2 minutes (after recent tweaks).
-- Performance while editing reasonably sized (< 1 million vertices) vector fields is good, while a 128^3 volume can be painfully slow under the right circumstances.
-- Display of velocity lines on large fields (>64^3) is very slow. 
+- Performance while editing reasonably sized (< 1 million vertices) vector fields is good, while a 128^3 volume can be painfully slow under the right (wrong) circumstances.
  
 ###### 128x128x128 and System Memory  
-- Editing a 128x128x128 vector field requires a 64-bit system and Blender install, as well as a large amount (> 6-8 GB) of system memory.
-- This is due to the amount of particles that need to have their dynamics cached
+- Editing a 128x128x128 vector field requires a 64-bit system and Blender version, as well as a large amount (> 6-8 GB) of system memory.
+- This is due to the amount of particles that need to have their dynamics cached (and the number of vertices in the volume mesh)
 - To avoid running out of memory while editing very high resolution vector fields, you may want to lower your undo history steps.
 - Using a disk cache for your particles may help, too. 
- 
-###### Console Warning Messages  
-- While creating new vector fields, the following messages will appear in your console window:
-- `CustomData_copy_data_layer: warning null data for CDOrco type (...)`
-- `CustomData_copy_data_layer: warning null data for CDMVert type (...)`
-- It looks like these appear because there is no face data in the vector field and can probably be ignored. 
- 
+
+
 ------------------------------------------------------------------------------------------------------- 
   
 ## Changelog:  

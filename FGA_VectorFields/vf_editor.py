@@ -80,7 +80,7 @@ def build_vectorfield(context):
 	psettings.normal_factor = 0.0
 	psettings.use_emit_random = False
 	psettings.frame_end = 1
-	psettings.lifetime = 32
+	psettings.lifetime = context.window_manager.vf_particleLifetime
 	psettings.grid_resolution = 1
 	psettings.use_rotations = True
 	psettings.use_dynamic_rotation = True

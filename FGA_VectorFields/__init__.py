@@ -42,6 +42,7 @@ class VFTOOLS_PT_menupanel(bpy.types.Panel):
 			box.row().column().prop(context.window_manager, 'vf_density', text='Resolution')
 			box.row().column().prop(context.window_manager, 'vf_scale', text='Scale')
 			box.row().prop(context.window_manager, 'vf_gravity', text='Gravity')
+			box.row().prop(context.window_manager, 'vf_particleLifetime', text='Particle Lifetime')
 			
 			row = box.row()
 			if context.active_object:
@@ -350,6 +351,8 @@ def initdefaults():
 	bpy.types.WindowManager.vf_gravity = bpy.props.FloatProperty(
 		default=0.0,min=0.0,description="Amount of influence gravity has on the volume's particles"
 	)
+	bpy.types.WindowManager.vf_particleLifetime = bpy.props.IntProperty(default=32)
+	
 	# calculate/edit
 	bpy.types.WindowManager.pvelocity_veltype = bpy.props.EnumProperty(
 		name="Velocity Type",
@@ -430,7 +433,7 @@ def initdefaults():
 
 def clearvars():
 	props = [
-		'vf_density','vf_scale','vf_gravity','pvelocity_veltype','pvelocity_genmode',
+		'vf_density','vf_scale','vf_gravity','vf_particleLifetime','pvelocity_veltype','pvelocity_genmode',
 		'pvelocity_invert','pvelocity_selection','pvelocity_avgratio','pvelocity_dirvector',
 		'curveForce_strength','curveForce_maxDist','curveForce_falloffPower','curveForce_trailout','curveForce_dispSize'
 		'vf_showingvelocitylines','vf_velocitylinescolor',

@@ -16,7 +16,7 @@ def build_importedVectorField(tempvelList, tempOffset):
 	for i in range(len(tempvelList)):
 		volmesh.custom_vectorfield[i].vvelocity = tempvelList[i]
 	
-	volmesh.parent.location = volmesh.parent.location + tempOffset
+	volmesh.location = volmesh.location + tempOffset
 
 # read data from file
 def parse_fgafile(self, context):
@@ -117,7 +117,7 @@ def write_fgafile(self, exportvol):
 		)
 	else:
 		if useoffset:
-			offsetvect = exportvol.parent.location
+			offsetvect = exportvol.location
 			fw("\n%f,%f,%f," % (
 				(((tempDensity[0] * -0.5) * fgascale[0]) + (offsetvect[0])) * self.exportvf_scale,
 				(((tempDensity[1] * -0.5) * fgascale[1]) + (offsetvect[1])) * self.exportvf_scale,

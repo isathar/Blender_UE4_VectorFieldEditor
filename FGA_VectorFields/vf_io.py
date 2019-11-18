@@ -16,7 +16,7 @@ def build_importedVectorField(tempvelList, tempOffset):
 	for i in range(len(tempvelList)):
 		volmesh.custom_vectorfield[i].vvelocity = tempvelList[i]
 	
-	volmesh.location = volmesh.location + tempOffset
+	volmesh.parent.location = volmesh.parent.location + tempOffset
 
 # read data from file
 def parse_fgafile(self, context):

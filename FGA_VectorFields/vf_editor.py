@@ -474,7 +474,7 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 			if context.window_manager.vf_showingvelocitylines < 1:
 				volmesh = context.active_object
 				
-				temploc = volmesh.parent.location
+				temploc = volmesh.location
 				vf_coords = [(Vector(v.vcoord) + temploc) for v in volmesh.custom_vectorfield]
 				vf_velocities = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
 				vf_DrawVelocities = [Vector((0.0,0.0,0.0)) for i in range(len(volmesh.custom_vectorfield) * 2)]

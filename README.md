@@ -61,7 +61,7 @@ Some example .fga files: http://www.mediafire.com/download/4x174fgf8lmec6g/VF_Ex
 ## Changelog:  
   
 ***1.2.1***:
-- probably fixed noneType error mesages *(Thank you to kkaja123 for reporting and looking into fixing it!)*
+- probably fixed noneType error messages *(Thank you to kkaja123 for reporting and looking into fixing it!)*
 - moved the menu to the panels at the right side of the workspace
 
 ***1.2.0***:

@@ -61,7 +61,14 @@ Some example .fga files: http://www.mediafire.com/download/4x174fgf8lmec6g/VF_Ex
   
 ## Changelog:  
   
-***1.1.5*** (current):
+***1.2.1***:
+- probably fixed noneType error mesages *(Thank you to kkaja123 for reporting and looking into fixing it!)*
+- moved the menu to the panels at the right side of the workspace
+
+***1.2.0***:
+- initial update to support Blender 2.8.
+
+***1.1.5***:
 - changed sorting of the calculation/velocity dropdown lists
 - new calculation method: Vector Reflection
 - added constraint to vector field volume, only moving the bounding box now moves the volume  

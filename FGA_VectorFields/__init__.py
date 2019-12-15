@@ -1,7 +1,7 @@
 bl_info = {
 	"name": "Vector Field Tools",
 	"author": "Andreas Wiehn (isathar)",
-	"version": (1, 2, 0),
+	"version": (1, 2, 1),
 	"blender": (2, 80, 0),
 	"location": "View3D > Add > VectorField",
 	"description": "Create and edit 3D Vector Fields using the .fga format.",
@@ -20,10 +20,11 @@ from . import vf_editor, vf_io
 
 # UI Panel
 class VFTOOLS_PT_menupanel(bpy.types.Panel):
-	bl_idname = "vftools.menupanel"
+	bl_idname = "VFTOOLS_PT_menupanel"
 	bl_label = 'Vector Fields'
 	bl_space_type = 'VIEW_3D'
-	bl_region_type = 'TOOLS'
+	bl_region_type = 'UI'
+	bl_category = "Particle Simulation"
 
 	def __init__(self):
 		pass

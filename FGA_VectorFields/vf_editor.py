@@ -9,7 +9,9 @@ from gpu_extras.batch import batch_for_shader
 
 
 ### Create
-
+xval = 0
+yval = 0
+zval = 0
 # Creates a new vector field from parameters
 def build_vectorfield(context):
 	zeroVect = Vector((0.0,0.0,0.0))
@@ -53,6 +55,9 @@ def build_vectorfield(context):
 	volMesh.vf_object_scale = scaleVal
 	
 	# create vertices + initialize velocities list
+	global xval
+	global yval
+	global zval
 	xval = int(densityVal[0])
 	yval = int(densityVal[1])
 	zval = int(densityVal[2])
@@ -155,8 +160,7 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 		volmesh = context.active_object
 		
 		vf_velocities = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
-		
-		
+
 		degp = bpy.context.evaluated_depsgraph_get()
 		particle_systems = volmesh.evaluated_get(degp).particle_systems
 		
@@ -254,18 +258,43 @@ class calc_vectorfieldvelocities(bpy.types.Operator):
 			else:
 				for i in range(len(particleslist)):
 					vf_velocities[i] = vf_velocities[i].reflect(particleslist[i])
-		
-		
 		# write new velocities
 		for i in range(len(vf_velocities)):
 			volmesh.custom_vectorfield[i].vvelocity = vf_velocities[i].copy()
-		
-		
 		del particleslist[:]
 		del vf_velocities[:]
 		context.window_manager.vf_showingvelocitylines = -1
 		return {'FINISHED'}
+		
+# Edge zero ,Clamp mode can be set
+class vf_boundaryzero(bpy.types.Operator):
+	bl_idname = 'object.vf_boundaryzero'
+	bl_label = 'Boundary Zero'
+	bl_description = 'boundaryZero saved velocity list'
+	bl_options = {'REGISTER', 'UNDO'}
 
+	@classmethod
+	def poll(cls, context):
+		return context.active_object != None and 'VF_Volume_' in context.active_object.name
+	
+	def execute(self, context):
+		volmesh = context.active_object
+		global xval
+		global yval
+		global zval
+		print("Vectorfield " + "X:"+str(xval)+ " Y:"+str(yval)+ " Z:"+str(zval))
+		print(len(volmesh.custom_vectorfield))
+		count = 0
+		for z in range(0,zval):
+			for y in range(0,yval):
+				for x in range(0,xval):
+					if(z > 0) and (z < zval-1) and (y > 0) and (y < yval-1) and (x > 0) and (x < xval -1):
+						pass
+					else:
+						volmesh.custom_vectorfield[count].vvelocity = Vector((0.0, 0.0, 0.0))
+					count += 1
+		context.window_manager.vf_showingvelocitylines = -1
+		return {'FINISHED'}
 
 # Normalizes the list
 class vf_normalizevelocities(bpy.types.Operator):
@@ -451,7 +480,6 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 	bl_idname = "view3d.toggle_vectorfieldvelocities"
 	bl_label = 'Show velocities'
 	bl_description = 'Display velocities as 3D lines'
-	
 	_handle = None
 	
 	@classmethod
@@ -480,7 +508,6 @@ class toggle_vectorfieldvelocities(bpy.types.Operator):
 				vf_coords = [(Vector(v.vcoord) + temploc) for v in volmesh.custom_vectorfield]
 				vf_velocities = [Vector(v.vvelocity) for v in volmesh.custom_vectorfield]
 				vf_DrawVelocities = [Vector((0.0,0.0,0.0)) for i in range(len(volmesh.custom_vectorfield) * 2)]
-				
 				velcounter = 0
 				for i in range(len(vf_coords)):
 					vf_DrawVelocities[velcounter] = vf_coords[i].copy()

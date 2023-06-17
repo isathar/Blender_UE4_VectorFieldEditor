@@ -81,6 +81,7 @@ class VFTOOLS_PT_menupanel(bpy.types.Panel):
 			box2 = box.box()
 			box2.row().operator('object.vf_normalizevelocities', text='Normalize')
 			box2.row().operator('object.vf_invertvelocities', text='Invert All')
+			box2.row().operator('object.vf_boundaryzero', text='Boundary Zero')
 		
 		# Display
 		box = layout.box()
@@ -465,6 +466,7 @@ classes = (
 	vf_editor.toggle_vectorfieldvelocities,
 	vf_editor.vf_normalizevelocities,
 	vf_editor.vf_invertvelocities,
+ 	vf_editor.vf_boundaryzero,
 	export_vectorfieldfile,
 	import_vectorfieldfile,
 	VFTOOLS_PT_menupanel,
